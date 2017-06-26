@@ -10,84 +10,137 @@ the CentOS 7 Development GUI image.
 - It might be better to have a multi-user client server set up.
 This way we could give them an openrc as well. 
 
-Talk about something here for ~10 min.
+Talk about something here for ~10 min... basic intro stuff?
 
-The openstack client should work there. 
+The openstack client *should* work there. 
 
 Have folks create an openrc.sh with their training account
 info. 
+
+```
+export OS_PROJECT_DOMAIN_NAME=tacc
+export OS_USER_DOMAIN_NAME=tacc
+export OS_PROJECT_NAME=tg-tra100001s
+export OS_USERNAME=tg?????
+export OS_PASSWORD=
+export OS_AUTH_URL=
+export OS_IDENTITY_API_VERSION=3
+```
 
 Make sure everyone has access to a working cmdline client - go through install steps if necessary. 
 Check openrc.sh.
 
 Have some basic openstack-client test command that everyone can confirm works for them.
-
-`openstack image list`.
-
-As a first step, create a security group to allow ssh access to your VMs:
-
+Be sure they can get the image number that we'll use for the nodes:
 ```
-openstack security group create --description "ssh \& icmp enabled" global-ssh
-openstack security group rule create --protocol tcp --dst-port 22:22 --remote-ip 0.0.0.0/0 global-ssh
-openstack security group rule create --protocol icmp global-ssh
+openstack image list | grep Featured-Centos7
 ```
 
-Next, we'll create an ssh key - feel free to use an existing key if you have one.
+As a first step, show the security group that we'll use
+(Since this is done on an allocation-wide basis, everyone trying to create it would fail)
+
 ```
-ssh-keygen -b 2048 -t rsa -f ${OS_PROJECT_NAME}-api-key -P ""
+openstack security group show  global-ssh
+```
+
+Next, we'll create an ssh key on their client
+```
+ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
 ```
 
 And add the public key to openstack - this will let you log in to the VMs you create.
 ```
-openstack keypair create --public-key id_rsa.pub ${OS_PROJECT_NAME}-api-key
+openstack keypair create --public-key ${OS_USERNAME}.pub ${OS_USERNAME}-api-key
 ```
 
 # Create the Private Network
 ```
-openstack network create ${OS_PROJECT_NAME}-api-net
-openstack subnet create --network ${OS_PROJECT_NAME}-api-net --subnet-range 10.0.0.0/24 ${OS_PROJECT_NAME}-api-subnet1
+openstack network create ${OS_USERNAME}-api-net
+openstack subnet create --network ${OS_USERNAME}-api-net --subnet-range 10.0.0.0/24 ${OS_USERNAME}-api-subnet1
 openstack subnet list
-openstack router create ${OS_PROJECT_NAME}-api-router
-openstack router add subnet ${OS_PROJECT_NAME}-api-router ${OS_PROJECT_NAME}-api-subnet1
-openstack router set --external-gateway public ${OS_PROJECT_NAME}-api-router
-openstack router show ${OS_PROJECT_NAME}-api-router
+openstack router create ${OS_USERNAME}-api-router
+openstack router add subnet ${OS_USERNAME}-api-router ${OS_USERNAME}-api-subnet1
+openstack router set --external-gateway public ${OS_USERNAME}-api-router
+openstack router show ${OS_USERNAME}-api-router
 ```
 
-
-
 # Build Headnode VM
+
+During this step, log in to 
+```jblb.jetstream-cloud.org/dashboard```
+with your tg???? id, to monitor your build progress on the Horizon interface.
+
 First we'll create a VM to contain the head node. 
 
 ```
-openstack server create --flavor m1.small  --image "Centos 7 (7.3) Development GUI" --key-name ${OS_PROJECT_NAME}-api-key --security-group global-ssh --nic net-id=${OS_PROJECT_NAME}-api-net headnode
+openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
 ```
 
 Now, create a public IP for that server:
 ```
 openstack floating ip create public
-openstack server add floating ip ${OS_PROJECT_NAME}-api-U-1 your.ip.number.here
-SSH root@your.ip.number.here
+openstack server add floating ip ${OS_USERNAME}-headnode your.ip.number.here
 ```
 
-
+While we wait, create a storage volume to mount on your headnode
 ```
-`openstack volume create \verb--size 10 \$\{OS_PROJECT_NAME\}\verb-10GVolume`
+openstack volume create --size 10 ${OS_USERNAME}-10GVolume
 
 ```
 
 Where the vm-uid-number is the uid for the headnode.
 ```
-`openstack server add volume vm-uid-number volume-uid-number`
+openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
+```
+Host headnode
+ user centos
+ Hostname 149.165.156.205
+ Port 22
+ IdentityFile /home/your-username/your-os-username-api-key
 ```
 
 # Configure Headnode VM
+ssh into your headnode machine 
+```
+ssh -i $your-key-name centos@server-public-ip
+#Or, if you set up the above .ssh/config:
+ssh headnode
+```
+
+Become root:
+```
+sudo su -
+```
+
+Find the new volume on the headnode with:
+```
+dmesg | tail
+```
+
+Create a new partition with parted:
+```
+parted /dev/sdb
+>mktable 
+> type:gpt
+>mkpart 
+> name: export
+> start:0% 
+> end:100%
+> fstype: xfs
+>quit
+mkfs.xfs /devsdb1
+```
+
+Now, find the UUID of your new partition, and mount:
+```
+ls -l /dev/disk/by-uuid
+sudo vi /etc/fstab
+#Add the line: 
+#$UUID   /export   xfs    defaults   0 0
+```
 
 Now, we start installing software on the headnode! 
 
-ssh into your headnode machine 
-```
-ssh -i $your-key-name train-xx@server-public-ip
-```
 
 Note what the private IP is:
 ```
@@ -95,7 +148,7 @@ ip addr
 ```
 
 ```
-yum install  "vim" "rsync" "epel-release""openmpi" "openmpi-devel"  "gcc" "gcc-c++" "gcc-gfortran" "openssl-devel" "libxml2-devel" "boost-devel" "net-tools" "readline-devel"  "pam-devel" "perl-ExtUtils-MakeMaker" 
+yum install vim rsync epel-release openmpi openmpi-devel gcc gcc-c++ gcc-gfortran openssl-devel libxml2-devel boost-devel net-tools readline-devel pam-devel perl-ExtUtils-MakeMaker 
 yum install munge munge-devel python-pip munge-libs
 ```
 
@@ -109,43 +162,76 @@ Edit /etc/exports to include (substitute the private IP of your headnode!):
 ```
 
 
- Save and restart nfs, exportfs. 
+Save and restart nfs, run exportfs. 
 
 Set ntp as a server on the private net only: 
 edit /etc/ntpd.conf to include
 ```
 # Permit access over internal cluster network
-restrict {{ internal_network }} mask 255.255.255.0 nomodify notrap
+restrict 10.0.0.0 mask 255.255.255.0 nomodify notrap
 ```
 
 Now, add the OpenHPC Yum repository to your headnode
 
-Create munge key.
+```
+yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+```
 
+Now, install the OpenHPC Slurm server package
+```
+yum install ohpc-slurm-server
+```
+
+Create munge key.
+```
+/usr/sbin/create-munge-key
+```
 
 # Build Compute Nodes
 
 Now, we can create compute nodes attached ONLY to the private network:
 ```
-openstack server create \
---flavor m1.medium \
---image "CentOS-7-x86_64-GenericCloud-1607" \
---key-name ${OS_PROJECT_NAME}-api-key \
---security-group global-ssh \
---nic net-id=${OS_PROJECT_NAME}-api-net \
-compute-0
+openstack server create --flavor m1.medium  --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
+openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
 ```
 
+Check their assigned ip addresses with
 ```
-openstack server create \
---flavor m1.small \
---image "CentOS-7-x86_64-GenericCloud-1607" \
---key-name ${OS_PROJECT_NAME}-api-key \
---security-group global-ssh \
---nic net-id=${OS_PROJECT_NAME}-api-net
-compute-1
+openstack server show ${OS_USERNAME}-compute-0
+openstack server show ${OS_USERNAME}-compute-1
 ```
 
+Now, on your client machine, add the following in your .ssh/config:
+```
+Host compute-0
+ user centos
+ Hostname 10.0.0.8
+ Port 22
+ ProxyCommand ssh -q -W %h:%p headnode
+ IdentityFile /home/ecoulter/tg829096-api-key
+
+Host compute-1
+ user centos
+ Hostname 10.0.0.9
+ Port 22
+ ProxyCommand ssh -q -W %h:%p centos@headnode
+ IdentityFile /home/ecoulter/tg829096-api-key
+```
+
+Create entries for these in /etc/hosts on the headnode:
+```
+10.0.0.8    compute-0  compute-0.jetstreamlocal
+10.0.0.9    compute-1  compute-1.jetstreamlocal
+```
+
+Now, copy your ssh public key from the headnode to the compute nodes.
+```
+headnode ~]# cat .ssh/id_rsa.pub
+client ~]# ssh compute-0
+compute-0 ~]# vi .ssh/authorized_keys
+client ~]# ssh compute-1
+compute-1 ~]# vi .ssh/authorized_keys
+```
 
 # Configure Compute nodes/scheduler
 In /etc/hosts, add entries for each of your VMs on the headnode:
@@ -155,15 +241,12 @@ $compute-0-private-ip  compute-0
 $compute-1-private-ip  compute-1
 ```
 
-From root on the headnode, run
-ssh-copy-id compute-0 (This probably won't work w/out password login, actually...)
-ssh-copy-id compute-1
-
-In /etc/fstab, add the following lines:
+Now, on each compute node,
+in /etc/fstab, add the following lines:
 (Replace 10.0.0.4 with the private ip of your headnode!)
 ```
-"10.0.0.4:/N  /N  nfs  defaults 0 0"
-"10.0.0.4:/home  /home  nfs  defaults 0 0"
+10.0.0.4:/N  /N  nfs  defaults 0 0
+10.0.0.4:/home  /home  nfs  defaults 0 0
 ```
 
 
