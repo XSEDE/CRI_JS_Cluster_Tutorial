@@ -1,6 +1,22 @@
 #  Tutorial_Practice
 
 # Intro
+
+## Build client VM
+Go to use.jetstream-cloud.org
+
+Start a new project, launch a new image based on 
+the CentOS 7 Development GUI image.
+- It might be better to have a multi-user client server set up.
+This way we could give them an openrc as well. 
+
+Talk about something here for ~10 min.
+
+The openstack client should work there. 
+
+Have folks create an openrc.sh with their training account
+info. 
+
 Make sure everyone has access to a working cmdline client - go through install steps if necessary. 
 Check openrc.sh.
 
@@ -43,7 +59,7 @@ openstack router show ${OS_PROJECT_NAME}-api-router
 First we'll create a VM to contain the head node. 
 
 ```
-openstack server create ${OS_PROJECT_NAME}-api-U-1 --flavor m1.small  --image IMAGE-NAME "Centos 7 (7.3) Development GUI" --key-name ${OS_PROJECT_NAME}-api-key --security-group global-ssh --nic net-id=${OS_PROJECT_NAME}-api-net headnode
+openstack server create --flavor m1.small  --image "Centos 7 (7.3) Development GUI" --key-name ${OS_PROJECT_NAME}-api-key --security-group global-ssh --nic net-id=${OS_PROJECT_NAME}-api-net headnode
 ```
 
 Now, create a public IP for that server:
@@ -111,9 +127,9 @@ Create munge key.
 
 Now, we can create compute nodes attached ONLY to the private network:
 ```
-openstack server create ${OS_PROJECT_NAME}-api-U-1 \
+openstack server create \
 --flavor m1.medium \
---image IMAGE-NAME "CentOS-7-x86_64-GenericCloud-1607" \
+--image "CentOS-7-x86_64-GenericCloud-1607" \
 --key-name ${OS_PROJECT_NAME}-api-key \
 --security-group global-ssh \
 --nic net-id=${OS_PROJECT_NAME}-api-net \
@@ -121,9 +137,9 @@ compute-0
 ```
 
 ```
-openstack server create ${OS_PROJECT_NAME}-api-U-1 \
+openstack server create \
 --flavor m1.small \
---image IMAGE-NAME "CentOS-7-x86_64-GenericCloud-1607" \
+--image "CentOS-7-x86_64-GenericCloud-1607" \
 --key-name ${OS_PROJECT_NAME}-api-key \
 --security-group global-ssh \
 --nic net-id=${OS_PROJECT_NAME}-api-net
