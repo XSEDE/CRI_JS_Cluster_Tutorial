@@ -1,6 +1,6 @@
-# Tutorial_Practice
+#  Tutorial_Practice
 
-#Intro
+# Intro
 Make sure everyone has access to a working cmdline client - go through install steps if necessary. 
 Check openrc.sh.
 
@@ -26,7 +26,7 @@ And add the public key to openstack - this will let you log in to the VMs you cr
 openstack keypair create --public-key id_rsa.pub ${OS_PROJECT_NAME}-api-key
 ```
 
-#Create the Private Network
+# Create the Private Network
 ```
 openstack network create ${OS_PROJECT_NAME}-api-net
 openstack subnet create --network ${OS_PROJECT_NAME}-api-net --subnet-range 10.0.0.0/24 ${OS_PROJECT_NAME}-api-subnet1
@@ -39,17 +39,11 @@ openstack router show ${OS_PROJECT_NAME}-api-router
 
 
 
-#Build All three VMs
+# Build Headnode VM
 First we'll create a VM to contain the head node. 
 
 ```
-openstack server create ${OS_PROJECT_NAME}-api-U-1 \
---flavor m1.small \
---image IMAGE-NAME "CentOS-7-x86_64-GenericCloud-1607" \
---key-name ${OS_PROJECT_NAME}-api-key \
---security-group global-ssh \
---nic net-id=${OS_PROJECT_NAME}-api-net \
-headnode
+openstack server create ${OS_PROJECT_NAME}-api-U-1 --flavor m1.small  --image IMAGE-NAME "Centos 7 (7.3) Development GUI" --key-name ${OS_PROJECT_NAME}-api-key --security-group global-ssh --nic net-id=${OS_PROJECT_NAME}-api-net headnode
 ```
 
 Now, create a public IP for that server:
@@ -70,7 +64,7 @@ Where the vm-uid-number is the uid for the headnode.
 `openstack server add volume vm-uid-number volume-uid-number`
 ```
 
-#Configure Headnode VM
+# Configure Headnode VM
 
 Now, we start installing software on the headnode! 
 
@@ -104,7 +98,7 @@ Edit /etc/exports to include (substitute the private IP of your headnode!):
 Set ntp as a server on the private net only: 
 edit /etc/ntpd.conf to include
 ```
-#Permit access over internal cluster network
+# Permit access over internal cluster network
 restrict {{ internal_network }} mask 255.255.255.0 nomodify notrap
 ```
 
@@ -113,7 +107,7 @@ Now, add the OpenHPC Yum repository to your headnode
 Create munge key.
 
 
-#Build Compute Nodes
+# Build Compute Nodes
 
 Now, we can create compute nodes attached ONLY to the private network:
 ```
@@ -137,7 +131,7 @@ compute-1
 ```
 
 
-#Configure Compute nodes/scheduler
+# Configure Compute nodes/scheduler
 In /etc/hosts, add entries for each of your VMs on the headnode:
 ```
 $headnode-private-ip  headnode
@@ -158,8 +152,8 @@ In /etc/fstab, add the following lines:
 
 
 
-#Run some JOBS
-#Conclusion
+# Run some JOBS
+# Conclusion
 Scripted build show-off if we have time. 
 Make sure people have links / contact points for future info.
 \end{document}
