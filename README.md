@@ -43,7 +43,7 @@ As a first step, show the security group that we'll use
 openstack security group show  global-ssh
 ```
 
-Next, we'll create an ssh key on their client
+Next, we'll create an ssh key on the client, which will be added to all VMs
 ```
 ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
 ```
@@ -73,7 +73,7 @@ with your tg???? id, to monitor your build progress on the Horizon interface.
 First we'll create a VM to contain the head node. 
 
 ```
-openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
+openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --security-group cluster-internal --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
 ```
 
 Now, create a public IP for that server:
@@ -91,10 +91,12 @@ openstack volume create --size 10 ${OS_USERNAME}-10GVolume
 Where the vm-uid-number is the uid for the headnode.
 ```
 openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
+
+Now, on your client machine, create a .ssh/config file in your home directory, and add the following:
 ```
 Host headnode
  user centos
- Hostname 149.165.156.205
+ Hostname your.headnode.ip.here
  Port 22
  IdentityFile /home/your-username/your-os-username-api-key
 ```
@@ -112,6 +114,12 @@ Become root:
 sudo su -
 ```
 
+Create and ssh key on the headnode, as root:
+```
+ssh-keygen -b 2048 -t rsa
+```
+We'll use this to enable root access between nodes in the cluster, later.
+
 Find the new volume on the headnode with:
 ```
 dmesg | tail
@@ -124,11 +132,11 @@ parted /dev/sdb
 > type:gpt
 >mkpart 
 > name: export
+> filesystem type: xfs
 > start:0% 
 > end:100%
-> fstype: xfs
 >quit
-mkfs.xfs /devsdb1
+mkfs.xfs /dev/sdb1
 ```
 
 Now, find the UUID of your new partition, and mount:
@@ -149,26 +157,35 @@ ip addr
 
 ```
 yum install vim rsync epel-release openmpi openmpi-devel gcc gcc-c++ gcc-gfortran openssl-devel libxml2-devel boost-devel net-tools readline-devel pam-devel perl-ExtUtils-MakeMaker 
-yum install munge munge-devel python-pip munge-libs
 ```
 
 Edit /etc/exports to include (substitute the private IP of your headnode!):
 ```
  "/home 10.0.0.0/24(rw,no_root_squash)"
 ```
+
  Also, export the shared volume:
 ```
- "/N 10.0.0.0/24(rw,no_root_squash)"
+ "/export 10.0.0.0/24(rw,no_root_squash)"
 ```
 
 
 Save and restart nfs, run exportfs. 
+```
+systemctl enable nfs-server nfs-lock nfs rpcbind nfs-idmap
+systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
+```
 
 Set ntp as a server on the private net only: 
 edit /etc/ntpd.conf to include
 ```
 # Permit access over internal cluster network
 restrict 10.0.0.0 mask 255.255.255.0 nomodify notrap
+```
+
+And then restart:
+```
+systemctl restart ntpd
 ```
 
 Now, add the OpenHPC Yum repository to your headnode
@@ -182,17 +199,20 @@ Now, install the OpenHPC Slurm server package
 yum install ohpc-slurm-server
 ```
 
-Create munge key.
+Check that /etc/munge/munge.key exists:
 ```
-/usr/sbin/create-munge-key
+ls /etc/munge/
 ```
 
 # Build Compute Nodes
 
-Now, we can create compute nodes attached ONLY to the private network:
+Now, we can create compute nodes attached ONLY to the private network.
+Log out of your headnode machine, and back to the client.
+
+Create two compute nodes as follows:
 ```
-openstack server create --flavor m1.medium  --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
-openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
+openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
+openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
 ```
 
 Check their assigned ip addresses with
@@ -205,32 +225,36 @@ Now, on your client machine, add the following in your .ssh/config:
 ```
 Host compute-0
  user centos
- Hostname 10.0.0.8
+ Hostname compute.0.ip.here
  Port 22
  ProxyCommand ssh -q -W %h:%p headnode
  IdentityFile /home/ecoulter/tg829096-api-key
 
 Host compute-1
  user centos
- Hostname 10.0.0.9
+ Hostname compute.1.ip.here
  Port 22
  ProxyCommand ssh -q -W %h:%p centos@headnode
  IdentityFile /home/ecoulter/tg829096-api-key
 ```
+This will let you access your compute nodes without putting them on the
+public internet.
+
+Now, log back in to your headnode:
 
 Create entries for these in /etc/hosts on the headnode:
 ```
-10.0.0.8    compute-0  compute-0.jetstreamlocal
-10.0.0.9    compute-1  compute-1.jetstreamlocal
+compute.0.ip.here    compute-0  compute-0.novalocal
+compute.1.ip.here    compute-1  compute-1.novalocal
 ```
 
-Now, copy your ssh public key from the headnode to the compute nodes.
+Now, copy the root ssh public key from the headnode to the compute nodes.
 ```
-headnode ~]# cat .ssh/id_rsa.pub
+headnode ~]# cat .ssh/id_rsa.pub #copy the output to your clipboard
 client ~]# ssh compute-0
-compute-0 ~]# vi .ssh/authorized_keys
+compute-0 ~]# sudo vi /root/.ssh/authorized_keys
 client ~]# ssh compute-1
-compute-1 ~]# vi .ssh/authorized_keys
+compute-1 ~]# sudo vi /root/.ssh/authorized_keys
 ```
 
 # Configure Compute nodes/scheduler
@@ -242,16 +266,108 @@ $compute-1-private-ip  compute-1
 ```
 
 Now, on each compute node,
-in /etc/fstab, add the following lines:
-(Replace 10.0.0.4 with the private ip of your headnode!)
+in /etc/fstab, add the following line:
 ```
-10.0.0.4:/N  /N  nfs  defaults 0 0
-10.0.0.4:/home  /home  nfs  defaults 0 0
+headnode.ip.goes.here:/home  /home  nfs  defaults 0 0
 ```
 
+Be sure to allow selinux to use nfs home directories:
+```
+sudo setsebool -P use_nfs_home_dirs on
+```
 
+Double-check that this worked:
+```
+mount -a 
+df -h
+```
+
+Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-client.
+```
+yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+yum install ohpc-slurm-client
+```
+
+This will create a new munge key on the compute nodes, so you will have to copy over
+the munge key from the headnode:
+```
+scp /etc/munge/munge.key compute-0:/etc/munge/
+scp /etc/munge/munge.key compute-1:/etc/munge/
+```
+
+# Set up the Scheduler
+Now, we need to edit the scheduler configuration file, /etc/slurm/slurm.conf
+ - you'll have to either be root on the headnode, or use sudo.
+```
+ClusterName=test-cluster
+ControlMachine=${OS_USERNAME}-headnode
+...
+FastSchedule=0
+...
+SlurmctldLogFile=/var/log/slurmctld.log
+SlurmdLogFile=/var/log/slurmd.log
+...
+JobAcctGatherType=jobacct_gather/linux
+JobAcctGatherFrequency=30
+...
+AccountingStorageType=accounting_storage/filetxt
+AccountingStorageHost=headnode
+AccountingStorageLoc=/var/log/slurmacct.log
+...
+# PLEASE REPLACE ${OS_USERNAME} WITH THE TEXT OF YOUR Openstack USERNAME!
+NodeName=${OS_USERNAME}0compute-[0-1] State=UNKNOWN
+#PartitionName=$name Nodes=ute-[0-1] Defult=YET MaxTime=2-00:00:00 State=UP
+PartitionName=general Nodes=${OS_USERNAME}-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
+```
+
+Now, create the necessary files in /var/log/ and make sure they are owned by the 
+slurm user:
+```
+touch /var/log/slurmctld.log
+chown slurm:slurm /var/log/slurmctld.log
+touch /var/log/slurmacct.log
+chown slurm:slurm /var/log/slurmacct.log
+```
+
+Finally, start the munge and slurmctld services:
+```
+systemctl enable munge slurmctld
+systemctl start munge slurmctld
+```
+
+Once you've finished that, scp the new slurm.conf to each compute node:
+```
+scp /etc/slurm/slurm.conf compute-0:/etc/slurm/
+scp /etc/slurm/slurm.conf compute-1:/etc/slurm/
+```
+
+And start the services on the compute nodes:
+```
+ssh compute-0 'systemctl enable munge slurmd && systemctl start munge slurmd'
+ssh compute-1 'systemctl enable munge slurmd && systemctl start munge slurmd'
+```
+
+Run sinfo and scontrol to see your new nodes:
+```
+sinfo
+scontrol
+```
+
+They show up in state unknown - it's necessary when adding nodes to inform SLURM
+that they are ready to accept jobs:
+```
+scontrol update NodeName=compute-[0-1] State=IDLE
+```
+
+So the current state should now be:
+```
+PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
+general*     up 2-00:00:00      2  idle* compute-[0-1]
+```
 
 # Run some JOBS
+
+
 # Conclusion
 Scripted build show-off if we have time. 
 Make sure people have links / contact points for future info.
