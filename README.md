@@ -91,6 +91,7 @@ openstack volume create --size 10 ${OS_USERNAME}-10GVolume
 Where the vm-uid-number is the uid for the headnode.
 ```
 openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
+```
 
 Now, on your client machine, create a .ssh/config file in your home directory, and add the following:
 ```
