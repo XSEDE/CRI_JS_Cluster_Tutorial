@@ -299,8 +299,10 @@ scp /etc/munge/munge.key compute-1:/etc/munge/
 # Set up the Scheduler
 Now, we need to edit the scheduler configuration file, /etc/slurm/slurm.conf
  - you'll have to either be root on the headnode, or use sudo.
+Change the lines below as shown here:
 ```
 ClusterName=test-cluster
+# PLEASE REPLACE ${OS_USERNAME} WITH THE TEXT OF YOUR Openstack USERNAME!
 ControlMachine=${OS_USERNAME}-headnode
 ...
 FastSchedule=0
