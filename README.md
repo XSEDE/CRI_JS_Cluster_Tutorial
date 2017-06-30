@@ -50,7 +50,7 @@ ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
 
 And add the public key to openstack - this will let you log in to the VMs you create.
 ```
-openstack keypair create --public-key ${OS_USERNAME}.pub ${OS_USERNAME}-api-key
+openstack keypair create --public-key ${OS_USERNAME}-api-key.pub ${OS_USERNAME}-api-key
 ```
 
 # Create the Private Network
