@@ -415,7 +415,7 @@ headnode] --> scontrol show node  # much more detailed
 They show up in state unknown - it's necessary when adding nodes to inform SLURM
 that they are ready to accept jobs:
 ```
-headnode] --> scontrol update NodeName=compute-[0-1] State=IDLE
+headnode] --> scontrol update NodeName=OS_USERNAME-compute-[0-1] State=IDLE
 ```
 
 So the current state should now be:
