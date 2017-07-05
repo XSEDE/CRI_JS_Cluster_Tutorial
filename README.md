@@ -506,7 +506,9 @@ module load mpi/openmpi-x86_64
 ```
 before any mpirun commands. For a simple example, add
 ```
-mpirun -n 8 hostname
+mpirun hostname
 ```
-at the end of your slurm_ex.job, and resubmit.
+at the end of your slurm_ex.job, and resubmit. 
 How does the output differ from before?
+Slurm provides the correct environment variables to MPI
+to run tasks on each available thread as needed.
