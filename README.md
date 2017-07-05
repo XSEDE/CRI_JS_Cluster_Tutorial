@@ -326,7 +326,7 @@ Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-c
 EACH compute node.
 ```
 compute-0 ~]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
-compute-0 ~]# yum install ohpc-slurm-client
+compute-0 ~]# yum install ohpc-slurm-client openmpi openmpi-devel hwloc-libs
 ```
 
 ---
@@ -455,3 +455,14 @@ headnode] centos --> sbatch slurm_ex.job  #output will be the job id number
 headnode] centos --> squeue  #show the job queue
 headnode] centos --> scontrol show job 2  #more detailed information
 ```
+
+You can also run mpi jobs! Just be sure to include
+```
+module load mpi/openmpi-x86_64
+```
+before any mpirun commands. For a simple example, add
+```
+mpirun -n 8 hostname
+```
+at the end of your slurm_ex.job, and resubmit.
+How does the output differ from before?
