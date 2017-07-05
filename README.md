@@ -249,26 +249,42 @@ Host compute-1
 This will let you access your compute nodes without putting them on the
 public internet.
 
-Now, log back in to your headnode, and
+
+Now, log back in to your headnode, 
+add the compute nodes to /etc/hosts, and
 copy the root ssh public key from the headnode to the compute nodes.
 
 ---
 **don't skip this step!**
 ---
 
+In /etc/hosts, add entries for each of your VMs on the headnode:
+```
+headnode] --> vim /etc/hosts
+HEADNODE-PRIVATE-IP  headnode
+COMPUTE-0-PRIVATE-IP  compute-0
+COMPUTE-1-PRIVATE-IP  compute-1
+```
+---
+**ESPECIALLY don't skip this step!**
+---
+
 ```
 pearc-clusters-server] --> ssh headnode
 headnode] --> sudo su -
 headnode] --> cat .ssh/id_rsa.pub #copy the output to your clipboard
+headnode] --> exit
 pearc-clusters-server] --> ssh compute-0
 compute-0 ~]# sudo vi /root/.ssh/authorized_keys #paste your key into this file
-compute-0 ~]# cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
+compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
                                                  #IF SO, REMOVE THEM! The ssh key must be on a single line
+compute-0 ~]# exit
+
 #Repeat for compute-1:
 pearc-clusters-server] --> ssh compute-1
 compute-1 ~]# sudo vi /root/.ssh/authorized_keys
-compute-0 ~]# cat -vTE /root/.ssh/authorized_keys 
+compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
 ```
 
 Confirm that as root on the headnode, you can ssh into each compute node:
@@ -280,13 +296,6 @@ headnode] --> ssh compute-1
 ```
 
 # Configure Compute Node Mounts:
-In /etc/hosts, add entries for each of your VMs on the headnode:
-```
-headnode] --> vim /etc/hosts
-HEADNODE-PRIVATE-IP  headnode
-COMPUTE-0-PRIVATE-IP  compute-0
-COMPUTE-1-PRIVATE-IP  compute-1
-```
 
 Now, ssh into each compute node, and perform the following steps to
 mount the shared directories from the headnode:
@@ -295,7 +304,7 @@ setps on EACH compute node:
 ```
 headnode] --> ssh compute-0
 compute-0 ~]# mkdir /export
-compute-0 ~]# vim /etc/fstab
+compute-0 ~]# vi /etc/fstab
 #ADD these two lines; do NOT remove existing entries!
 $headnode-private-ip:/home  /home  nfs  defaults 0 0
 $headnode-private-ip:/export  /export  nfs  defaults 0 0
