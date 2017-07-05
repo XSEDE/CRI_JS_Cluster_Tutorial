@@ -398,10 +398,10 @@ Try remotely starting the services on the compute nodes:
 ```
 headnode] --> ssh compute-0 'systemctl enable munge'
 headnode] --> ssh compute-0 'systemctl start munge'
-headnode] --> ssh compute-0 'systemctl status munge'
-headnode] --> ssh compute-0 'systemctl enable slurmctld'
-headnode] --> ssh compute-0 'systemctl start slurmctld'
-headnode] --> ssh compute-0 'systemctl status slurmctld'
+headnode] --> ssh compute-0 'system status munge'
+headnode] --> ssh compute-0 'system enable slurmd'
+headnode] --> ssh compute-0 'system start slurmd'
+headnode] --> ssh compute-0 'system status slurmd'
 ```
 As usual, repeat for compute-1
 
