@@ -251,7 +251,11 @@ public internet.
 
 Now, log back in to your headnode, and
 copy the root ssh public key from the headnode to the compute nodes.
+
+---
 **don't skip this step!**
+---
+
 ```
 pearc-clusters-server] --> ssh headnode
 headnode] --> sudo su -
