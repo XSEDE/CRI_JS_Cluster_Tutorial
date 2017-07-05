@@ -212,7 +212,8 @@ headnode] --> ls /etc/munge/
 # Build Compute Nodes
 
 Now, we can create compute nodes attached ONLY to the private network.
-Log out of your headnode machine, and back to the client.
+
+LOG OUT OF YOUR HEADNODE MACHINE, and back to the client.
 
 Create two compute nodes as follows:
 ```
