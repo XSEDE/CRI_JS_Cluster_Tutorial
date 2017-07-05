@@ -344,7 +344,9 @@ headnode] --> scp /etc/munge/munge.key compute-1:/etc/munge/
 Now, we need to edit the scheduler configuration file, /etc/slurm/slurm.conf
  - you'll have to either be root on the headnode, or use sudo.
 Change the lines below as shown here:
+
 **Note: edit these lines, do not copy-paste this at the end!**
+
 Blank lines indicate content to be skipped.
 ```
 headnode] --> vim /etc/slurm/slurm.conf
