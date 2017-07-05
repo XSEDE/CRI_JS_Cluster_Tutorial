@@ -125,7 +125,7 @@ headnode] --> ssh-keygen -b 2048 -t rsa
 We'll use this to enable root access between nodes in the cluster, later.
 
 Note what the private IP is - it will be referred to later as 
-$headnode-private-ip (in this example, it shows up at 10.0.0.1):
+HEADNODE-PRIVATE-IP (in this example, it shows up at 10.0.0.1):
 ``` 
 headnode] --> ip addr
 ...
@@ -243,7 +243,7 @@ Host compute-1
  user centos
  Hostname $your.compute.1.ip
  Port 22
- ProxyCommand ssh -q -W %h:%p centos@headnode
+ ProxyCommand ssh -q -W %h:%p headnode
  IdentityFile /home/OS_USERNAME/OS_USERNAME-api-key
 ```
 This will let you access your compute nodes without putting them on the
@@ -306,8 +306,8 @@ headnode] --> ssh compute-0
 compute-0 ~]# mkdir /export
 compute-0 ~]# vi /etc/fstab
 #ADD these two lines; do NOT remove existing entries!
-$headnode-private-ip:/home  /home  nfs  defaults 0 0
-$headnode-private-ip:/export  /export  nfs  defaults 0 0
+HEADNODE-PRIVATE-IP:/home  /home  nfs  defaults 0 0
+HEADNODE-PRIVATE-IP:/export  /export  nfs  defaults 0 0
 ```
 
 Be sure to allow selinux to use nfs home directories:
