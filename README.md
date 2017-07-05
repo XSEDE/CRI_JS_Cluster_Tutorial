@@ -33,6 +33,10 @@ pearc-clusters-server] --> openstack image list | grep Featured-Centos7
 
 As a first step, show the security groups that we'll use
  - normally, you would have to create this when first using an allocation.
+By DEFAULT, the security groups on Jetstream are CLOSED - this is the opposite
+of how firewalls typically work (completely OPEN by default). 
+If you create a host on a new allocation without adding it to a security group
+that allows access to some ports, you will not be able to use it!
 
 ```
 pearc-clusters-server] --> openstack security group show global-ssh 
@@ -42,11 +46,22 @@ pearc-clusters-server] --> openstack security group show cluster-internal
 Next, create an ssh key on the client, which will be added to all VMs
 ```
 pearc-clusters-server] --> ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
+#just accepting the defaults (hit Enter) is fine for this tutorial!
 ```
 
 And add the public key to openstack - this will let you log in to the VMs you create.
 ```
 pearc-clusters-server] --> openstack keypair create --public-key ${OS_USERNAME}-api-key.pub ${OS_USERNAME}-api-key
+```
+
+Show your openstack keys via:
+```
+openstack keypair list
+```
+
+If you want to be 100% sure, you can show the fingerprint of your key with
+```
+ssh-keygen -lf ${OS_USERNAME}-api-key
 ```
 
 ## Create the Private Network
@@ -64,7 +79,10 @@ pearc-clusters-server] --> openstack router show ${OS_USERNAME}-api-router
 
 During this step, log in to 
 ```jblb.jetstream-cloud.org/dashboard```
+
 with your tg???? id, to monitor your build progress on the Horizon interface.
+You will also be able to view other trainees instances and networks - **PLEASE do not delete 
+or modify anything that isn't yours!**
 
 First we'll create a VM to contain the head node. 
 
@@ -89,8 +107,9 @@ Now, add the new storage device to your headnode VM:
 pearc-clusters-server] --> openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
 ```
 
-Now, on your client machine, create a .ssh/config file in your home directory, and add the following:
+Now, on your client machine, create a .ssh directory in your home directory, and add the following:
 ```
+pearc-clusters-server] --> mkdir -m 0700 .ssh
 pearc-clusters-server] --> vim .ssh/config
 #ssh config file:
 Host headnode
@@ -98,6 +117,11 @@ Host headnode
  Hostname YOUR-HEADNODE-IP
  Port 22
  IdentityFile /home/your-username/your-os-username-api-key
+```
+Make sure the permissions on .ssh are 700!
+```
+pearc-clusters-server] --> ls -ld .ssh
+pearc-clusters-server] --> chmod 0700 .ssh
 ```
 
 # Configure Headnode VM
@@ -116,6 +140,7 @@ headnode] --> sudo su -
 Create an ssh key on the headnode, as root:
 ```
 headnode] --> ssh-keygen -b 2048 -t rsa
+#just accepting the defaults (hit Enter) is fine for this tutorial!
 ```
 We'll use this to enable root access between nodes in the cluster, later.
 
@@ -137,9 +162,27 @@ Install useful software:
 ```
 headnode] --> yum install vim rsync epel-release openmpi openmpi-devel gcc gcc-c++ gcc-gfortran openssl-devel libxml2-devel boost-devel net-tools readline-devel pam-devel perl-ExtUtils-MakeMaker 
 ```
-Find the new volume on the headnode with:
+Find the new volume on the headnode with (most likely it will mount as sdb):
 ```
-headnode] --> dmesg | tail
+headnode] --> dmesg | grep sd
+[    1.715421] sd 2:0:0:0: [sda] 16777216 512-byte logical blocks: (8.58 GB/8.00 GiB)
+[    1.718439] sd 2:0:0:0: [sda] Write Protect is off
+[    1.720066] sd 2:0:0:0: [sda] Mode Sense: 63 00 00 08
+[    1.720455] sd 2:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    1.725878]  sda: sda1
+[    1.727563] sd 2:0:0:0: [sda] Attached SCSI disk
+[    2.238056] XFS (sda1): Mounting V5 Filesystem
+[    2.410020] XFS (sda1): Ending clean mount
+[    7.997131] Installing knfsd (copyright (C) 1996 okir@monad.swb.de).
+[    8.539042] sd 2:0:0:0: Attached scsi generic sg0 type 0
+[    8.687877] fbcon: cirrusdrmfb (fb0) is primary device
+[    8.719492] cirrus 0000:00:02.0: fb0: cirrusdrmfb frame buffer device
+[  246.622485] sd 2:0:0:1: Attached scsi generic sg1 type 0
+[  246.633569] sd 2:0:0:1: [sdb] 20971520 512-byte logical blocks: (10.7 GB/10.0 GiB)
+[  246.667567] sd 2:0:0:1: [sdb] Write Protect is off
+[  246.667923] sd 2:0:0:1: [sdb] Mode Sense: 63 00 00 08
+[  246.678696] sd 2:0:0:1: [sdb] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[  246.793574] sd 2:0:0:1: [sdb] Attached SCSI disk
 ```
 
 Create a new filesystem on the device:
@@ -432,6 +475,7 @@ Create an ssh key, and add it to authorized_keys. Since /home is mounted
 on all nodes, this is enough to enable access to the compute nodes!
 ```
 headnode] centos --> ssh-keygen -t rsa -b 2048
+#just accepting the defaults (hit Enter) is fine for this tutorial!
 headnode] centos --> cat .ssh/id_rsa.pub >> .ssh/authorized_keys
 headnode] centos --> ssh compute-0 #just as a test
 ```
