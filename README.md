@@ -95,7 +95,7 @@ pearc-clusters-server] --> vim .ssh/config
 #ssh config file:
 Host headnode
  user centos
- Hostname $your.headnode.public.ip
+ Hostname YOUR-HEADNODE-IP
  Port 22
  IdentityFile /home/your-username/your-os-username-api-key
 ```
@@ -105,7 +105,7 @@ ssh into your headnode machine
 ```
 pearc-clusters-server] --> ssh headnode
 #Or, if you didn't set up the above .ssh/config:
-pearc-clusters-server] --> ssh -i $your-key-name centos@$your-headnode-public-ip
+pearc-clusters-server] --> ssh -i YOUR-KEY-NAME centos@YOUR-HEADNODE-PUBLIC-IP
 ```
 
 Become root: (otherwise, you'll have to preface much of the following with sudo)
@@ -155,11 +155,11 @@ headnode] --> mkfs.xfs /dev/sdb
 Now, find the UUID of your new filesystem, add it to fstab, and mount:
 ```
 headnode] --> ls -l /dev/disk/by-uuid
-$UUID_OF_ROOT  /dev/sda
-$UUID_OF_NEW   /dev/sdb
+UUID_OF_ROOT  /dev/sda
+UUID_OF_NEW   /dev/sdb
 headnode] --> vi /etc/fstab
 #Add the line: 
-#$UUID_OF_NEW   /export   xfs    defaults   0 0
+UUID=UUID_OF_NEW   /export   xfs    defaults   0 0
 headnode] --> mkdir /export
 headnode] --> mount -a
 ```
@@ -229,21 +229,21 @@ pearc-clusters-server] --> openstack server show ${OS_USERNAME}-compute-1
 Now, on your client machine, add the following in your .ssh/config:
 ```
 pearc-clusters-server] --> vim .ssh/config
-#REPLACE ${OS_USERNAME} with your OPENSTACK USER NAME! (tg455???)
+#REPLACE OS_USERNAME with your OPENSTACK USER NAME! (tg455???)
 Host compute-0
  user centos
  Hostname $your.compute.0.ip
  Port 22
  ProxyCommand ssh -q -W %h:%p headnode
- IdentityFile /home/${OS_USERNAME}/{OS_USERNAME}-api-key
+ IdentityFile /home/OS_USERNAME/OS_USERNAME-api-key
 
-#REPLACE ${OS_USERNAME} with your OPENSTACK USER NAME! (tg455???)
+#REPLACE OS_USERNAME with your OPENSTACK USER NAME! (tg455???)
 Host compute-1
  user centos
  Hostname $your.compute.1.ip
  Port 22
  ProxyCommand ssh -q -W %h:%p centos@headnode
- IdentityFile /home/${OS_USERNAME}/{OS_USERNAME}-api-key
+ IdentityFile /home/OS_USERNAME/OS_USERNAME-api-key
 ```
 This will let you access your compute nodes without putting them on the
 public internet.
@@ -278,9 +278,9 @@ headnode] --> ssh compute-1
 In /etc/hosts, add entries for each of your VMs on the headnode:
 ```
 headnode] --> vim /etc/hosts
-$headnode-private-ip  headnode
-$compute-0-private-ip  compute-0
-$compute-1-private-ip  compute-1
+HEADNODE-PRIVATE-IP  headnode
+COMPUTE-0-PRIVATE-IP  compute-0
+COMPUTE-1-PRIVATE-IP  compute-1
 ```
 
 Now, ssh into each compute node, and perform the following steps to
@@ -333,15 +333,15 @@ Change the lines below as shown here:
 ```
 headnode] --> vim /etc/slurm.conf
 ClusterName=test-cluster
-# PLEASE REPLACE ${OS_USERNAME} WITH THE TEXT OF YOUR Openstack USERNAME!
-ControlMachine=${OS_USERNAME}-headnode
+# PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
+ControlMachine=OS_USERNAME-headnode
 ...
 FastSchedule=0 #this allows SLURM to auto-detect hardware on compute nodes
 ...
-# PLEASE REPLACE ${OS_USERNAME} WITH THE TEXT OF YOUR Openstack USERNAME!
-NodeName=${OS_USERNAME}0compute-[0-1] State=UNKNOWN
+# PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
+NodeName=OS_USERNAME-compute-[0-1] State=UNKNOWN
 #PartitionName=$name Nodes=ute-[0-1] Defult=YET MaxTime=2-00:00:00 State=UP
-PartitionName=general Nodes=${OS_USERNAME}-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
+PartitionName=general Nodes=OS_USERNAME-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
 ```
 
 Now, check the necessary files in /var/log/ and make sure they are owned by the 
