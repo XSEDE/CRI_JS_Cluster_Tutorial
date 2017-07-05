@@ -356,7 +356,7 @@ FastSchedule=0 #this allows SLURM to auto-detect hardware on compute nodes
 ...
 # PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
 NodeName=OS_USERNAME-compute-[0-1] State=UNKNOWN
-#PartitionName=$name Nodes=ute-[0-1] Defult=YET MaxTime=2-00:00:00 State=UP
+#PartitionName=$name Nodes=compute-[0-1] Default=YET MaxTime=2-00:00:00 State=UP
 PartitionName=general Nodes=OS_USERNAME-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
 ```
 
