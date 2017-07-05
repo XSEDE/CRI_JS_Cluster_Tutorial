@@ -113,11 +113,6 @@ Become root: (otherwise, you'll have to preface much of the following with sudo)
 headnode] --> sudo su -
 ```
 
-Set the hostname, to avoid confusion:
-```
-headnode] --> hostnamectl set-hostname headnode
-```
-
 Create an ssh key on the headnode, as root:
 ```
 headnode] --> ssh-keygen -b 2048 -t rsa
@@ -349,14 +344,16 @@ headnode] --> scp /etc/munge/munge.key compute-1:/etc/munge/
 Now, we need to edit the scheduler configuration file, /etc/slurm/slurm.conf
  - you'll have to either be root on the headnode, or use sudo.
 Change the lines below as shown here:
+**Note: edit these lines, do not copy-paste this at the end!**
+Blank lines indicate content to be skipped.
 ```
-headnode] --> vim /etc/slurm.conf
+headnode] --> vim /etc/slurm/slurm.conf
 ClusterName=test-cluster
 # PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
 ControlMachine=OS_USERNAME-headnode
-...
+
 FastSchedule=0 #this allows SLURM to auto-detect hardware on compute nodes
-...
+
 # PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
 NodeName=OS_USERNAME-compute-[0-1] State=UNKNOWN
 #PartitionName=$name Nodes=compute-[0-1] Default=YET MaxTime=2-00:00:00 State=UP
