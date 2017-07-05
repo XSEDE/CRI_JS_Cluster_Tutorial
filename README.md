@@ -321,7 +321,9 @@ compute-0 ~]# mount -a
 compute-0 ~]# df -h
 ```
 
-Follow the same steps for compute-1 now.
+---
+**Follow the same steps for compute-1 now.**
+---
 
 # Install and configure scheduler daemon on compute nodes
 
