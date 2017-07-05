@@ -333,7 +333,10 @@ EACH compute node.
 compute-0 ~]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
 compute-0 ~]# yum install ohpc-slurm-client
 ```
-Now, repeat the above on compute-1.
+
+---
+**Now, repeat the above on compute-1.**
+---
 
 This will create a new munge key on the compute nodes, so you will have to copy over
 the munge key from the headnode:
