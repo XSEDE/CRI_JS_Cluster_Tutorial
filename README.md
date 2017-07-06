@@ -2,11 +2,18 @@
 
 # Access Openstack Client Server
 
+To access the client server, use your provided OS_USERNAME and password,
+and log in to
+```
 ssh ${OS_USERNAME}@149.165.157.95
+```
+
+You may experience a delay after typing in your password - this is normal!
+Don't cancel your connection.
 
 # Configure openstack client
 
-First, edit the openrc.sh with your training account
+First, double-check the openrc.sh with your training account
 info - the file already exists in your home
 directory:
 
