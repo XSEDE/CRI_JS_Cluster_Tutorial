@@ -228,7 +228,7 @@ headnode] --> systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 Set ntp as a server on the private net only: 
 edit /etc/ntp.conf to include
 ```
-headnode] --> vim /etc/ntpd.conf
+headnode] --> vim /etc/ntp.conf
 # Permit access over internal cluster network
 restrict 10.0.0.0 mask 255.255.255.0 nomodify notrap
 ```
