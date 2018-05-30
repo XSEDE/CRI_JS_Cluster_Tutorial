@@ -226,16 +226,16 @@ headnode] --> systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 
 
 Set ntp as a server on the private net only: 
-edit /etc/ntp.conf to include
+edit /etc/chrony.conf to include
 ```
-headnode] --> vim /etc/ntp.conf
+headndoe] --> vim /etc/chrony.conf
 # Permit access over internal cluster network
-restrict 10.0.0.0 mask 255.255.255.0 nomodify notrap
+allow 10.0.0.0/24
 ```
 
 And then restart:
 ```
-headnode] --> systemctl restart ntpd
+headnode] --> systemctl restart chronyd
 ```
 
 Now, add the OpenHPC Yum repository to your headnode
@@ -265,6 +265,7 @@ Create two compute nodes as follows:
 pearc-clusters-server] --> openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
 pearc-clusters-server] --> openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Feb-7-2017" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
 ```
+Take note of how long this takes.
 
 Check their assigned ip addresses with
 ```
@@ -475,7 +476,7 @@ PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
 general*     up 2-00:00:00      2  idle* compute-[0-1]
 ```
 
-# Run some JOBS
+# Run some Jobs
 On the headnode, as the centOS user, you will need to enable ssh access for yourself
 across the cluster! 
 Create an ssh key, and add it to authorized_keys. Since /home is mounted
@@ -519,3 +520,29 @@ at the end of your slurm_ex.job, and resubmit.
 How does the output differ from before?
 Slurm provides the correct environment variables to MPI
 to run tasks on each available thread as needed.
+
+## TODO: Add some interesting jobs. With Software. Also, add some software.
+## And maybe X-forwarding.
+
+# Add Elasticity
+
+While the work we've done so far is plenty for a simple cluster,
+it's also a great way to burn through your Jetstream allocation 
+if you have any kind of significant workload. Luckily, we can
+leverage Slurm's native cloud compatibility to create a interface
+with Openstack to keep our compute instances alive only when we
+need them. Slurm will handle the details of deciding when
+to bring nodes up and down, as long as we instruct it *how* to do so.
+
+First of all, let's examine the time it takes to suspend/resume 
+a compute node! 
+
+* Give slurm access to openrc
+* requirements for the suspend/resume scripts
+  * use the slurm docs? Primary sources!
+  * hostname issues - scontrol show host
+* permissions issues?
+  * user-specific sudoers
+* write a suspend.sh and resume.sh
+* keep things simple - no creation/destruction!
+* example ansible playbook?
