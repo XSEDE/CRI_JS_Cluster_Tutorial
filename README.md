@@ -167,8 +167,14 @@ headnode]$ ip addr
 
 Install useful software:
 ```
-headnode]$ yum install vim rsync epel-release openmpi openmpi-devel gcc gcc-c++ gcc-gfortran openssl-devel libxml2-devel boost-devel net-tools readline-devel pam-devel perl-ExtUtils-MakeMaker 
+headnode]$ yum install vim rsync epel-release net-tools 
 ```
+
+###Just for today, we'll install the openstack client:
+```
+headnode] root$ pip install python-openstackclient
+```
+
 <!---
 Find the new volume on the headnode with (most likely it will mount as sdb):
 ```
