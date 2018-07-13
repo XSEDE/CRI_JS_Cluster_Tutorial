@@ -153,6 +153,18 @@ headnode]$ ssh-keygen -b 2048 -t rsa
 ```
 We'll use this to enable root access between nodes in the cluster, later.
 
+Now, let's also add this to openstack, so that our root user will be able to log in to
+the compute nodes we'll create later:
+```
+headnode] root$ openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
+```
+
+Remember, you can check your keypair fingerprint via:
+```
+ssh-keygen -E md5 -lf .ssh/id_rsa.pub 
+```
+
+
 Note what the private IP is - it will be referred to later as 
 HEADNODE-PRIVATE-IP (in this example, it shows up at 10.0.0.1):
 ``` 
@@ -270,8 +282,8 @@ LOG OUT OF YOUR HEADNODE MACHINE, and back to the client.
 
 Create two compute nodes as follows:
 ```
-pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
-pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-api-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
+pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
+pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
 ```
 Take note of how long this takes.
 
@@ -725,6 +737,7 @@ headnode] root$ cp openrc.sh /etc/slurm/
 headnode] root$ chown slurm:slurm /etc/slurm/openrc.sh
 headnode] root$ chmod 400 /etc/slurm/openrc.sh
 ```
+
 We'll also create a log file for slurm to use:
 ```
 touch /var/log/slurm_elastic.log
