@@ -143,6 +143,8 @@ Become root: (otherwise, you'll have to preface much of the following with sudo)
 ```
 headnode]$ sudo su -
 ```
+
+WE WILL START FROM HERE, IN 2018!
 -->
 Create an ssh key on the headnode, as root:
 ```
@@ -231,8 +233,6 @@ headnode]$ systemctl enable nfs-server nfs-lock nfs rpcbind nfs-idmap
 headnode]$ systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 ```
 -->
-# WE WILL BE STARTING FROM HERE in 2018:
-
 Set ntp as a server on the private net only: 
 edit /etc/chrony.conf to include
 ```
