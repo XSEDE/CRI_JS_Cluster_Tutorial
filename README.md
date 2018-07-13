@@ -186,6 +186,11 @@ the headnode ip address!*):
 tgxxxxx@api-host]$ scp -i ${OS_USERNAME}-api-key openrc.sh centos@<your-headnode-ip>:
 ```
 
+Then, copy it to your root users' home directory (on your headnode:)
+```
+centos@tgxxxx-headnode]$ sudo cp openrc.sh /root/
+```
+
 <!---
 Install useful software:
 ```
