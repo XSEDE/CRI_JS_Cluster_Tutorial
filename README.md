@@ -153,18 +153,6 @@ headnode]$ ssh-keygen -b 2048 -t rsa
 ```
 We'll use this to enable root access between nodes in the cluster, later.
 
-Now, let's also add this to openstack, so that our root user will be able to log in to
-the compute nodes we'll create later:
-```
-root@tgxxxx-headnode ]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
-```
-
-Remember, you can check your keypair fingerprint via:
-```
-ssh-keygen -E md5 -lf .ssh/id_rsa.pub 
-```
-
-
 Note what the private IP is - it will be referred to later as 
 HEADNODE-PRIVATE-IP (in this example, it shows up at 10.0.0.1):
 ``` 
@@ -190,6 +178,18 @@ Then, copy it to your root users' home directory (on your headnode:)
 ```
 centos@tgxxxx-headnode]$ sudo cp openrc.sh /root/
 ```
+
+Now, let's add your root ssh key to openstack, so that our root user will be able to log in to
+the compute nodes we'll create:
+```
+root@tgxxxx-headnode ]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
+```
+
+Remember, you can check your keypair fingerprint via:
+```
+ssh-keygen -E md5 -lf .ssh/id_rsa.pub 
+```
+
 
 <!---
 Install useful software:
