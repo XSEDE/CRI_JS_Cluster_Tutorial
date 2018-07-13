@@ -18,7 +18,7 @@ info - the file already exists in your home
 directory:
 
 ```
-pearc-clusters-server]$ cat ./openrc.sh
+api-host]$ cat ./openrc.sh
 export OS_PROJECT_DOMAIN_NAME=tacc
 export OS_USER_DOMAIN_NAME=tacc
 export OS_PROJECT_NAME=tg-tra100001s
@@ -30,12 +30,12 @@ export OS_IDENTITY_API_VERSION=3
 
 Next, add these environment variables to your shell session:
 ```
-pearc-clusters-server]$ source openrc.sh
+api-host]$ source openrc.sh
 ```
 
 Ensure that you have working openstack client access by running:
 ```
-pearc-clusters-server]$ openstack image list | grep Featured-Centos7
+api-host]$ openstack image list | grep Featured-Centos7
 ```
 
 As a first step, show the security groups that we'll use
@@ -46,19 +46,19 @@ If you create a host on a new allocation without adding it to a security group
 that allows access to some ports, you will not be able to use it!
 
 ```
-pearc-clusters-server]$ openstack security group show global-ssh 
-pearc-clusters-server]$ openstack security group show cluster-internal
+api-host]$ openstack security group show global-ssh 
+api-host]$ openstack security group show cluster-internal
 ```
 
 Next, create an ssh key on the client, which will be added to all VMs
 ```
-pearc-clusters-server]$ ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
+api-host]$ ssh-keygen -b 2048 -t rsa -f ${OS_USERNAME}-api-key -P ""
 #just accepting the defaults (hit Enter) is fine for this tutorial!
 ```
 
 And add the public key to openstack - this will let you log in to the VMs you create.
 ```
-pearc-clusters-server]$ openstack keypair create --public-key ${OS_USERNAME}-api-key.pub ${OS_USERNAME}-api-key
+api-host]$ openstack keypair create --public-key ${OS_USERNAME}-api-key.pub ${OS_USERNAME}-api-key
 ```
 
 Show your openstack keys via:
@@ -73,13 +73,13 @@ ssh-keygen -lf ${OS_USERNAME}-api-key
 
 ## Create the Private Network
 ```
-pearc-clusters-server]$ openstack network create ${OS_USERNAME}-api-net
-pearc-clusters-server]$ openstack subnet create --network ${OS_USERNAME}-api-net --subnet-range 10.0.0.0/24 ${OS_USERNAME}-api-subnet1
-pearc-clusters-server]$ openstack subnet list
-pearc-clusters-server]$ openstack router create ${OS_USERNAME}-api-router
-pearc-clusters-server]$ openstack router add subnet ${OS_USERNAME}-api-router ${OS_USERNAME}-api-subnet1
-pearc-clusters-server]$ openstack router set --external-gateway public ${OS_USERNAME}-api-router
-pearc-clusters-server]$ openstack router show ${OS_USERNAME}-api-router
+api-host]$ openstack network create ${OS_USERNAME}-api-net
+api-host]$ openstack subnet create --network ${OS_USERNAME}-api-net --subnet-range 10.0.0.0/24 ${OS_USERNAME}-api-subnet1
+api-host]$ openstack subnet list
+api-host]$ openstack router create ${OS_USERNAME}-api-router
+api-host]$ openstack router add subnet ${OS_USERNAME}-api-router ${OS_USERNAME}-api-subnet1
+api-host]$ openstack router set --external-gateway public ${OS_USERNAME}-api-router
+api-host]$ openstack router show ${OS_USERNAME}-api-router
 ```
 
 # Build Headnode VM
@@ -94,30 +94,30 @@ or modify anything that isn't yours!**
 First we'll create a VM to contain the head node. 
 
 ```
-pearc-clusters-server]$ openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --security-group cluster-internal --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
+api-host]$ openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --security-group cluster-internal --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
 ```
 
 Now, create a public IP for that server:
 ```
-pearc-clusters-server]$ openstack floating ip create public
-pearc-clusters-server]$ openstack server add floating ip ${OS_USERNAME}-headnode your.ip.number.here
+api-host]$ openstack floating ip create public
+api-host]$ openstack server add floating ip ${OS_USERNAME}-headnode your.ip.number.here
 ```
 
 While we wait, create a storage volume to mount on your headnode
 ```
-pearc-clusters-server]$ openstack volume create --size 10 ${OS_USERNAME}-10GVolume
+api-host]$ openstack volume create --size 10 ${OS_USERNAME}-10GVolume
 
 ```
 
 Now, add the new storage device to your headnode VM:
 ```
-pearc-clusters-server]$ openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
+api-host]$ openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10GVolume
 ```
 
 Now, on your client machine, create a .ssh directory in your home directory, and add the following:
 ```
-pearc-clusters-server]$ mkdir -m 0700 .ssh
-pearc-clusters-server]$ vim .ssh/config
+api-host]$ mkdir -m 0700 .ssh
+api-host]$ vim .ssh/config
 #ssh config file:
 Host headnode
  user centos
@@ -127,16 +127,16 @@ Host headnode
 ```
 Make sure the permissions on .ssh are 700!
 ```
-pearc-clusters-server]$ ls -ld .ssh
-pearc-clusters-server]$ chmod 0700 .ssh
+api-host]$ ls -ld .ssh
+api-host]$ chmod 0700 .ssh
 ```
 
 # Configure Headnode VM
 ssh into your headnode machine 
 ```
-pearc-clusters-server]$ ssh headnode
+api-host]$ ssh headnode
 #Or, if you didn't set up the above .ssh/config:
-pearc-clusters-server]$ ssh -i YOUR-KEY-NAME centos@YOUR-HEADNODE-PUBLIC-IP
+api-host]$ ssh -i YOUR-KEY-NAME centos@YOUR-HEADNODE-PUBLIC-IP
 ```
 
 Become root: (otherwise, you'll have to preface much of the following with sudo)
@@ -156,7 +156,7 @@ We'll use this to enable root access between nodes in the cluster, later.
 Now, let's also add this to openstack, so that our root user will be able to log in to
 the compute nodes we'll create later:
 ```
-headnode] root$ openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
+root@tgxxxx-headnode root@tgxxxx-headnode root@tgxxxx-headnode api-host]#]#]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
 ```
 
 Remember, you can check your keypair fingerprint via:
@@ -179,6 +179,14 @@ headnode]$ ip addr
 ...
 ```
 
+We will also need to have access to Openstack from the headnode, so send over 
+your openrc.sh from your api-host terminal (*do not forget the ':' at the end of 
+the headnode ip address!*):
+```
+tgxxxxx@api-host]$ scp -i ${OS_USERNAME}-api-key openrc.sh centos@<your-headnode-ip>:
+```
+
+<!---
 Install useful software:
 ```
 headnode]$ yum install vim rsync epel-release net-tools 
@@ -186,8 +194,9 @@ headnode]$ yum install vim rsync epel-release net-tools
 
 ### Just for today, we'll install the openstack client:
 ```
-headnode] root$ pip install python-openstackclient
+root@tgxxxx-headnode ~] pip install python-openstackclient
 ```
+-->
 
 <!---
 Find the new volume on the headnode with (most likely it will mount as sdb):
@@ -229,6 +238,16 @@ UUID=UUID_OF_NEW   /export   xfs    defaults   0 0
 headnode]$ mkdir /export
 headnode]$ mount -a
 ```
+-->
+
+## Headnode base configuration
+
+Before we start installing cluster management software, there are a few things 
+to set up. First, we want to have a shared filesystem across the cluster, and
+second, we need all of the nodes to share the same time. 
+
+To share filesystems, we'll export our home directories, the openstack volume and 
+the OpenHPC public directory via nfs.
 
 Edit /etc/exports to include (substitute the private IP of your headnode!)
 entries for /home and /export
@@ -236,16 +255,15 @@ entries for /home and /export
 headnode]$ vim /etc/exports
 /home 10.0.0.0/24(rw,no_root_squash)
 /export 10.0.0.0/24(rw,no_root_squash)
+/opt/ohpc/pub 10.0.0.0/24(rw,no_root_squash)
 ```
-
 
 Save and restart nfs, run exportfs. 
 ```
 headnode]$ systemctl enable nfs-server nfs-lock nfs rpcbind nfs-idmap
 headnode]$ systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 ```
--->
-Set ntp as a server on the private net only: 
+
 edit /etc/chrony.conf to include
 ```
 headnode]$ vim /etc/chrony.conf
@@ -258,21 +276,6 @@ And then restart:
 headnode]$ systemctl restart chronyd
 ```
 
-Now, add the OpenHPC Yum repository to your headnode
-
-```
-headnode]$ yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
-```
-
-Now, install the OpenHPC Slurm server package
-```
-headnode]$ yum install -y ohpc-slurm-server
-```
-
-Check that /etc/munge/munge.key exists:
-```
-headnode]$ ls /etc/munge/
-```
 
 # Build Compute Nodes
 
@@ -282,20 +285,21 @@ LOG OUT OF YOUR HEADNODE MACHINE, and back to the client.
 
 Create two compute nodes as follows:
 ```
-pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
-pearc-clusters-server]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
+api-host]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-0
+api-host]$ openstack server create --flavor m1.medium --security-group cluster-internal --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-compute-1
 ```
 Take note of how long this takes.
 
 Check their assigned ip addresses with
 ```
-pearc-clusters-server]$ openstack server show ${OS_USERNAME}-compute-0
-pearc-clusters-server]$ openstack server show ${OS_USERNAME}-compute-1
+api-host]$ openstack server show ${OS_USERNAME}-compute-0
+api-host]$ openstack server show ${OS_USERNAME}-compute-1
 ```
 
+<!--
 Now, on your client machine, add the following in your .ssh/config:
 ```
-pearc-clusters-server]$ vim .ssh/config
+api-host]$ vim .ssh/config
 #REPLACE OS_USERNAME with your OPENSTACK USER NAME! (tg455???)
 Host compute-0
  user centos
@@ -314,9 +318,10 @@ Host compute-1
 ```
 This will let you access your compute nodes without putting them on the
 public internet.
+-->
 
 
-Now, log back in to your headnode, 
+Now, on your headnode, 
 add the compute nodes to /etc/hosts, and
 copy the root ssh public key from the headnode to the compute nodes.
 
@@ -336,11 +341,10 @@ COMPUTE-1-PRIVATE-IP  compute-1
 ---
 
 ```
-pearc-clusters-server]$ ssh headnode
+api-host]$ ssh headnode
 headnode]$ sudo su -
 headnode]$ cat .ssh/id_rsa.pub #copy the output to your clipboard
-headnode]$ exit
-pearc-clusters-server]$ ssh compute-0
+headnode]$ ssh compute-0
 compute-0 ~]# sudo vi /root/.ssh/authorized_keys #paste your key into this file
 compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
@@ -348,17 +352,16 @@ compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no 
 compute-0 ~]# exit
 
 #Repeat for compute-1:
-pearc-clusters-server]$ ssh compute-1
+headnode]$ ssh compute-1
 compute-1 ~]# sudo vi /root/.ssh/authorized_keys
-compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
+compute-1 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
 ```
 
 Confirm that as root on the headnode, you can ssh into each compute node:
 ```
-pearc-clusters-server]$ ssh headnode
 headnode]$ sudo su -
-headnode]$ ssh compute-0
-headnode]$ ssh compute-1
+headnode]$ ssh compute-0 'hostname'
+headnode]$ ssh compute-1 'hostname'
 ```
 
 # Configure Compute Node Mounts:
@@ -370,7 +373,7 @@ mount the shared directories from the headnode:
 headnode]$ ssh compute-0
 compute-0 ~]# mkdir /export
 compute-0 ~]# vi /etc/fstab
-#ADD these two lines; do NOT remove existing entries!
+#ADD these three lines; do NOT remove existing entries!
 HEADNODE-PRIVATE-IP:/home  /home  nfs  defaults,nofail 0 0
 HEADNODE-PRIVATE-IP:/export  /export  nfs  defaults,nofail 0 0
 HEADNODE-PRIVATE-IP:/opt/ohpc/pub  /opt/ohpc/pub  nfs  defaults,nofail 0 0
@@ -391,7 +394,27 @@ compute-0 ~]# df -h
 **Follow the same steps for compute-1 now.**
 ---
 
-# Install and configure scheduler daemon on compute nodes
+## Begin installing OpenHPC Components
+
+Now, add the OpenHPC Yum repository to your headnode. 
+This will let you access several hundred pre-compiled packages
+for cluster administration - for more details on what's available, 
+check out the [project site](https://openhpc.community).
+
+```
+headnode]$ yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+```
+
+Now, install the OpenHPC Slurm server package
+```
+headnode]$ yum install -y ohpc-slurm-server
+```
+
+Check that /etc/munge/munge.key exists:
+```
+headnode]$ ls /etc/munge/
+```
+### Install and configure scheduler daemon (slurmd) on compute nodes
 
 Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-client to 
 EACH compute node.
@@ -411,7 +434,7 @@ headnode]$ scp /etc/munge/munge.key compute-0:/etc/munge/
 headnode]$ scp /etc/munge/munge.key compute-1:/etc/munge/
 ```
 
-# Set up the Scheduler
+## Set up the Scheduler
 Now, we need to edit the scheduler configuration file, /etc/slurm/slurm.conf
  - you'll have to either be root on the headnode, or use sudo.
 Change the lines below as shown here:
@@ -497,20 +520,20 @@ general*     up 2-00:00:00      2  idle* compute-[0-1]
 ```
 
 # Run some Jobs
-On the headnode, as the centOS user, you will need to enable ssh access for yourself
+On the headnode, as the centos user, you will need to enable ssh access for yourself
 across the cluster! 
 Create an ssh key, and add it to authorized_keys. Since /home is mounted
 on all nodes, this is enough to enable access to the compute nodes!
 ```
-headnode] centos$ ssh-keygen -t rsa -b 2048
+centos@tgxxxx-headnode ~] ssh-keygen -t rsa -b 2048
 #just accepting the defaults (hit Enter) is fine for this tutorial!
-headnode] centos$ cat .ssh/id_rsa.pub >> .ssh/authorized_keys
-headnode] centos$ ssh compute-0 #just as a test
+centos@tgxxxx-headnode ~] cat .ssh/id_rsa.pub >> .ssh/authorized_keys
+centos@tgxxxx-headnode ~] ssh compute-0 #just as a test
 ```
 
 Now, create a simple SLURM batch script:
 ```
-headnode] centos$ vim slurm_ex.job
+centos@tgxxxx-headnode ~] vim slurm_ex.job
 #!/bin/bash
 #SBATCH -N 2 #ask for 2 nodes
 #SBATCH -n 4 #ask for 4 processes per node
@@ -522,10 +545,10 @@ srun -l hostname #srun runs the command on EACH node in the job allocation
 sleep 30 # keep this in the queue long enough to see it!
 
 
-headnode] centos$ sbatch slurm_ex.job  #output will be the job id number
+centos@tgxxxx-headnode ~] sbatch slurm_ex.job  #output will be the job id number
 2
-headnode] centos$ squeue  #show the job queue
-headnode] centos$ scontrol show job 2  #more detailed information
+centos@tgxxxx-headnode ~] squeue  #show the job queue
+centos@tgxxxx-headnode ~] scontrol show job 2  #more detailed information
 ```
 
 # Set up the Modules system
@@ -534,12 +557,12 @@ Now that you've got a working scheduler, time to add some interesting software.
 For the sake of usability, we're going to use a modules system, to keep track
 of different versions, compilers, etc. 
 ```
-headnode] root$ yum install lmod-ohpc
+root@tgxxxx-headnode ~] yum install lmod-ohpc
 ```
 Repeat the same on your compute nodes:
 ```
-headnode] root$ ssh ${OS_USERNAME}-compute-0 'yum install -y lmod-ohpc'
-headnode] root$ ssh ${OS_USERNAME}-compute-1 'yum install -y lmod-ohpc'
+root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-0 'yum install -y lmod-ohpc'
+root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-1 'yum install -y lmod-ohpc'
 ```
 
 This sets you up with the 'lmod' module system.
@@ -547,7 +570,7 @@ This sets you up with the 'lmod' module system.
 
 Right now, you won't have many modules available, but you can view them with
 ```
-headnode] centos$ modules avail
+centos@tgxxxx-headnode ~] modules avail
 ```
 
 The modulefiles from OpenHPC are installed in 
@@ -569,7 +592,7 @@ will show two different versions of the gnu compilers.
 
 We'll use the smaller of the two, and pull in the openmpi compilers as well:
 ```
-headnode] root$ yum install gnu-complers-ohpc openmpi-gnu-ohpc
+root@tgxxxx-headnode ~] yum install gnu-complers-ohpc openmpi-gnu-ohpc
 ```
 
 Notice there are different versions of openmpi as well:
@@ -579,7 +602,7 @@ yum list openmpi*ohpc
 
 Now, you should see a 'gnu/$version' module. Load it with
 ```
-headnode] centos$ module load gnu
+centos@tgxxxx-headnode ~] module load gnu
 ```
 
 This will make the appropriate openmpi module available as well,
@@ -617,7 +640,7 @@ software (and different versions for every different research group!).
 
 Install via:
 ```
-headnode] root$ yum install spack-ohpc
+root@tgxxxx-headnode ~] yum install spack-ohpc
 ```
 
 The spack configuration needs some editing - in 
@@ -640,14 +663,14 @@ We'll just use the default tcl modules for now.
 
 To start using spack, as root, source the spack environment:
 ```
-headnode] root$ . /opt/ohpc/admin/spack/0.11.2/share/spack/setup-env.sh
+root@tgxxxx-headnode ~] . /opt/ohpc/admin/spack/0.11.2/share/spack/setup-env.sh
 ```
 
 Now, let's add our new compilers to the spack environment. 
 Make sure the gnu and openmpi modules are loaded 
 (check this via `module list`), and run
 ```
-headnode] root$ spack compiler find
+root@tgxxxx-headnode ~] spack compiler find
 ```
 
 In order to use the proper libraries, we also need to add the 
@@ -664,7 +687,7 @@ Finally, we can build some software!
 Spack has an enormous library of tools available. We'll install a 
 standard molecular dynamics code as an example:
 ```
-headnode] root$ spack install lammps+molecule % gcc@5.4.0
+root@tgxxxx-headnode ~] spack install lammps+molecule % gcc@5.4.0
 ```
 
 Spack install syntax follows a format like
@@ -677,7 +700,7 @@ For more detailed info on spack, see the
 
 Now, look in /opt/ohpc/pub/examples:
 ```
-headnode] root$ ls /opt/ohpc/pub/examples
+root@tgxxxx-headnode ~] ls /opt/ohpc/pub/examples
 ```
 
 You'll see a variety of LAMMPS example jobs to run. 
@@ -733,9 +756,9 @@ First of all, give slurm access to Openstack:
 Place a copy of your openrc.sh in /etc/slurm/, and make sure it's owned,
 and only readable by the 'slurm' user:
 ```
-headnode] root$ cp openrc.sh /etc/slurm/
-headnode] root$ chown slurm:slurm /etc/slurm/openrc.sh
-headnode] root$ chmod 400 /etc/slurm/openrc.sh
+root@tgxxxx-headnode ~] cp openrc.sh /etc/slurm/
+root@tgxxxx-headnode ~] chown slurm:slurm /etc/slurm/openrc.sh
+root@tgxxxx-headnode ~] chmod 400 /etc/slurm/openrc.sh
 ```
 
 We'll also create a log file for slurm to use:
@@ -747,7 +770,7 @@ chown slurm:slurm /var/log/slurm_elastic.log
 Now, let's create scripts that slurm can run to suspend and resume the nodes.
 For node resume, edit
 ```
-headnode] root$ vim /usr/local/sbin/slurm_resume.sh
+root@tgxxxx-headnode ~] vim /usr/local/sbin/slurm_resume.sh
 ...
 #!/bin/bash
 source /etc/slurm/openrc.sh
@@ -805,13 +828,13 @@ done
 Make sure slurm_resume.sh and slurm_suspend.sh are owned and executable by the
 slurm user!
 ```
-headnode] root$ chown slurm:slurm /usr/local/sbin/slurm_resume.sh
-headnode] root$ chmod u+x /usr/local/sbin/slurm_resume.sh
+root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_resume.sh
+root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_resume.sh
 ```
 
 We'll need to update the slurm.conf, by adding the following lines:
 ```
-headnode] root$ vim /etc/slurm/slurm.conf
+root@tgxxxx-headnode ~] vim /etc/slurm/slurm.conf
 #CLOUD CONFIGURATION
 PrivateData=cloud
 ResumeProgram=/usr/local/sbin/slurm_resume.sh
@@ -825,8 +848,8 @@ SuspendTimeout=30 #time between running SuspendProgram and the node being comple
 
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
-headnode] root$ scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
-headnode] root$ ssh ${OS_USERNAME}-compute-0 'systemctl restart slurmd'
+root@tgxxxx-headnode ~] scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
+root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-0 'systemctl restart slurmd'
 ```
 
 At this point, your compute nodes should be managed by slurm! 
