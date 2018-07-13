@@ -172,7 +172,7 @@ Install useful software:
 headnode]$ yum install vim rsync epel-release net-tools 
 ```
 
-###Just for today, we'll install the openstack client:
+### Just for today, we'll install the openstack client:
 ```
 headnode] root$ pip install python-openstackclient
 ```
