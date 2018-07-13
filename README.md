@@ -156,7 +156,7 @@ We'll use this to enable root access between nodes in the cluster, later.
 Now, let's also add this to openstack, so that our root user will be able to log in to
 the compute nodes we'll create later:
 ```
-root@tgxxxx-headnode root@tgxxxx-headnode root@tgxxxx-headnode api-host]#]#]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
+root@tgxxxx-headnode ]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
 ```
 
 Remember, you can check your keypair fingerprint via:
@@ -331,7 +331,7 @@ copy the root ssh public key from the headnode to the compute nodes.
 
 In /etc/hosts, add entries for each of your VMs on the headnode:
 ```
-headnode]$ vim /etc/hosts
+root@headnode ~]# vim /etc/hosts
 HEADNODE-PRIVATE-IP  headnode
 COMPUTE-0-PRIVATE-IP  compute-0
 COMPUTE-1-PRIVATE-IP  compute-1
@@ -341,27 +341,27 @@ COMPUTE-1-PRIVATE-IP  compute-1
 ---
 
 ```
-api-host]$ ssh headnode
-headnode]$ sudo su -
-headnode]$ cat .ssh/id_rsa.pub #copy the output to your clipboard
-headnode]$ ssh compute-0
-compute-0 ~]# sudo vi /root/.ssh/authorized_keys #paste your key into this file
-compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
+root@headnode]# sudo su -
+root@headnode]# cat .ssh/id_rsa.pub #copy the output to your clipboard
+root@headnode]# ssh centos@compute-0
+centos@compute-0 ~]$ sudo su -
+root@compute-0 ~]# sudo vi /root/.ssh/authorized_keys #paste your key into this file
+root@compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
                                                  #IF SO, REMOVE THEM! The ssh key must be on a single line
-compute-0 ~]# exit
+root@compute-0 ~]# exit
 
 #Repeat for compute-1:
-headnode]$ ssh compute-1
-compute-1 ~]# sudo vi /root/.ssh/authorized_keys
-compute-1 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
+root@headnode ~]# ssh compute-1
+root@compute-1 ~]# sudo vi /root/.ssh/authorized_keys
+root@compute-1 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
 ```
 
 Confirm that as root on the headnode, you can ssh into each compute node:
 ```
-headnode]$ sudo su -
-headnode]$ ssh compute-0 'hostname'
-headnode]$ ssh compute-1 'hostname'
+root@headnode ~]# sudo su -
+root@headnode ~]# ssh compute-0 'hostname'
+root@headnode ~]# ssh compute-1 'hostname'
 ```
 
 # Configure Compute Node Mounts:
@@ -370,9 +370,9 @@ Now, ssh into EACH compute node, and perform the following steps to
 mount the shared directories from the headnode:
 (Be sure you are ssh-ing as root!)
 ```
-headnode]$ ssh compute-0
-compute-0 ~]# mkdir /export
-compute-0 ~]# vi /etc/fstab
+root@headnode ~]# ssh compute-0
+root@compute-0 ~]# mkdir /export
+root@compute-0 ~]# vi /etc/fstab
 #ADD these three lines; do NOT remove existing entries!
 HEADNODE-PRIVATE-IP:/home  /home  nfs  defaults,nofail 0 0
 HEADNODE-PRIVATE-IP:/export  /export  nfs  defaults,nofail 0 0
@@ -381,13 +381,13 @@ HEADNODE-PRIVATE-IP:/opt/ohpc/pub  /opt/ohpc/pub  nfs  defaults,nofail 0 0
 
 Be sure to allow selinux to use nfs home directories:
 ```
-compute-0 ~]# setsebool -P use_nfs_home_dirs on
+root@compute-0 ~]# setsebool -P use_nfs_home_dirs on
 ```
 
 Double-check that this worked:
 ```
-compute-0 ~]# mount -a 
-compute-0 ~]# df -h
+root@compute-0 ~]# mount -a 
+root@compute-0 ~]# df -h
 ```
 
 ---
@@ -402,25 +402,25 @@ for cluster administration - for more details on what's available,
 check out the [project site](https://openhpc.community).
 
 ```
-headnode]$ yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+root@headnode]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
 ```
 
 Now, install the OpenHPC Slurm server package
 ```
-headnode]$ yum install -y ohpc-slurm-server
+root@headnode]# yum install -y ohpc-slurm-server
 ```
 
 Check that /etc/munge/munge.key exists:
 ```
-headnode]$ ls /etc/munge/
+root@headnode]# ls /etc/munge/
 ```
 ### Install and configure scheduler daemon (slurmd) on compute nodes
 
 Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-client to 
 EACH compute node.
 ```
-compute-0 ~]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
-compute-0 ~]# yum install ohpc-slurm-client hwloc-libs
+root@compute-0 ~]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+root@compute-0 ~]# yum install ohpc-slurm-client hwloc-libs
 ```
 
 ---
@@ -430,8 +430,8 @@ compute-0 ~]# yum install ohpc-slurm-client hwloc-libs
 This will create a new munge key on the compute nodes, so you will have to copy over
 the munge key from the headnode:
 ```
-headnode]$ scp /etc/munge/munge.key compute-0:/etc/munge/
-headnode]$ scp /etc/munge/munge.key compute-1:/etc/munge/
+root@headnode]# scp /etc/munge/munge.key compute-0:/etc/munge/
+root@headnode]# scp /etc/munge/munge.key compute-1:/etc/munge/
 ```
 
 ## Set up the Scheduler
@@ -443,7 +443,7 @@ Change the lines below as shown here:
 
 Blank lines indicate content to be skipped.
 ```
-headnode]$ vim /etc/slurm/slurm.conf
+root@headnode]# vim /etc/slurm/slurm.conf
 ClusterName=test-cluster
 # PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
 ControlMachine=OS_USERNAME-headnode
@@ -459,62 +459,62 @@ PartitionName=general Nodes=OS_USERNAME-compute-[0-1] Default=YES MaxTime=2-00:0
 Now, check the necessary files in /var/log/ and make sure they are owned by the 
 slurm user:
 ```
-headnode]$ touch /var/log/slurmctld.log
-headnode]$ chown slurm:slurm /var/log/slurmctld.log
-headnode]$ touch /var/log/slurmacct.log
-headnode]$ chown slurm:slurm /var/log/slurmacct.log
+root@headnode]# touch /var/log/slurmctld.log
+root@headnode]# chown slurm:slurm /var/log/slurmctld.log
+root@headnode]# touch /var/log/slurmacct.log
+root@headnode]# chown slurm:slurm /var/log/slurmacct.log
 ```
 
 Finally, start the munge and slurmctld services:
 ```
-headnode]$ systemctl enable munge 
-headnode]$ systemctl start munge 
-headnode]$ systemctl enable slurmctld 
-headnode]$ systemctl start slurmctld 
+root@headnode]# systemctl enable munge 
+root@headnode]# systemctl start munge 
+root@headnode]# systemctl enable slurmctld 
+root@headnode]# systemctl start slurmctld 
 ```
 
 If slurmctld fails to start, check the following for useful messages:
 ```
-headnode]$ systemctl -l status slurmctld
-headnode]$ journalctl -xe
-headnode]$ less /var/log/slurmctld.log
+root@headnode]# systemctl -l status slurmctld
+root@headnode]# journalctl -xe
+root@headnode]# less /var/log/slurmctld.log
 ```
 
 Once you've finished that, scp the new slurm.conf to each compute node:
 (slurm requires that all nodes have the same slurm.conf file!)
 ```
-headnode]$ scp /etc/slurm/slurm.conf compute-0:/etc/slurm/
-headnode]$ scp /etc/slurm/slurm.conf compute-1:/etc/slurm/
+root@headnode]# scp /etc/slurm/slurm.conf compute-0:/etc/slurm/
+root@headnode]# scp /etc/slurm/slurm.conf compute-1:/etc/slurm/
 ```
 
 Try remotely starting the services on the compute nodes:
 (as root on the headnode)
 ```
-headnode]$ ssh compute-0 'systemctl enable munge'
-headnode]$ ssh compute-0 'systemctl start munge'
-headnode]$ ssh compute-0 'systemctl status munge'
-headnode]$ ssh compute-0 'systemctl enable slurmd'
-headnode]$ ssh compute-0 'systemctl start slurmd'
-headnode]$ ssh compute-0 'systemctl status slurmd'
+root@headnode]# ssh compute-0 'systemctl enable munge'
+root@headnode]# ssh compute-0 'systemctl start munge'
+root@headnode]# ssh compute-0 'systemctl status munge'
+root@headnode]# ssh compute-0 'systemctl enable slurmd'
+root@headnode]# ssh compute-0 'systemctl start slurmd'
+root@headnode]# ssh compute-0 'systemctl status slurmd'
 ```
 As usual, repeat for compute-1
 
 Run sinfo and scontrol to see your new nodes:
 ```
-headnode]$ sinfo
-headnode]$ sinfo --long --Node #sometimes a more usful format
-headnode]$ scontrol show node  # much more detailed 
+root@headnode]# sinfo
+root@headnode]# sinfo --long --Node #sometimes a more usful format
+root@headnode]# scontrol show node  # much more detailed 
 ```
 
 They show up in state unknown or drain - it's necessary when adding nodes to inform SLURM
 that they are ready to accept jobs:
 ```
-headnode]$ scontrol update NodeName=OS_USERNAME-compute-[0-1] State=IDLE
+root@headnode]# scontrol update NodeName=OS_USERNAME-compute-[0-1] State=IDLE
 ```
 
 So the current state should now be:
 ```
-headnode]$ sinfo
+root@headnode]# sinfo
 PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
 general*     up 2-00:00:00      2  idle* compute-[0-1]
 ```
