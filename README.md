@@ -167,6 +167,7 @@ Create an ssh key on the headnode, as BOTH centos and root:
 ```
 centos@headnode]$ ssh-keygen -b 2048 -t rsa
 centos@headnode]$ cat .ssh/id_rsa.pub >> .ssh/authorized_keys
+centos@headnode ~]# sudo su -
 root@headnode ~]# ssh-keygen -b 2048 -t rsa
 root@headnode ~]# cat .ssh/id_rsa.pub >> .ssh/authorized_keys
 #just accepting the defaults (hit Enter) is fine for this tutorial!
@@ -195,6 +196,7 @@ Now, let's add your root ssh key to openstack, so that our root user will be abl
 the compute nodes we'll create:
 
 ```
+root@tgxxxx-headnode ]# source openrc.sh
 root@tgxxxx-headnode ]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
 ```
 
@@ -302,9 +304,20 @@ headnode.
 Create two compute nodes as follows:
 ```
 root@headnode]#source openrc.sh
-root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-0
-root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-1
+root@headnode]# openstack server create --flavor m1.medium \
+--security-group ${OS_USERNAME}-global-ssh \
+--image "JS-API-Featured-Centos7-Jul-2-2018" \
+--key-name ${OS_USERNAME}-cluster-key \
+--nic net-id=${OS_USERNAME}-api-net \
+--wait ${OS_USERNAME}-compute-0
+root@headnode]# openstack server create --flavor m1.medium \
+--security-group ${OS_USERNAME}-global-ssh \
+--image "JS-API-Featured-Centos7-Jul-2-2018" \
+--key-name ${OS_USERNAME}-cluster-key \
+--nic net-id=${OS_USERNAME}-api-net \
+--wait ${OS_USERNAME}-compute-1
 ```
+<!-- root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-1 -->
 
 Check their assigned ip addresses with
 ```
@@ -359,7 +372,8 @@ We're going to set up your root ssh key on the compute nodes root user -
 you've already got access as the 'centos' user, but synchronizing many of the
 necessary files requires root access. This will save lots of pain, but can be
 tricky to get working, so please follow these steps carefully, and pay attention to which
-user and node you're on.
+user and node you're on. Remove the top line of the authorized_keys file on the compute nodes
+to allow access! There should only be one authorized key.
 ```
 root@headnode]# cat .ssh/id_rsa.pub #copy the output to your clipboard
 root@headnode]# ssh centos@compute-0
@@ -382,6 +396,13 @@ Confirm that as root on the headnode, you can ssh into each compute node:
 root@headnode ~]# sudo su -
 root@headnode ~]# ssh compute-0 'hostname'
 root@headnode ~]# ssh compute-1 'hostname'
+```
+
+#### Synchronize /etc/hosts
+We'll use this method to synchronize several files later on as well - from root on the headnode:
+```
+root@headnode ~]# scp /etc/hosts compute-0:/etc/hosts
+root@headnode ~]# scp /etc/hosts compute-1:/etc/hosts
 ```
 
 # Configure Compute Node Mounts and chronyd:
@@ -450,6 +471,11 @@ root@headnode]# ls /etc/munge/
 ```
 ### Install and configure scheduler daemon (slurmd) on compute nodes
 
+In a production system, this would usually be accomplished by building an image
+on the headnode, which is then pushed out to the compute nodes at boot time, rather
+than allowing the compute nodes access to the public internet. (Setting up a proxy
+through the headnode is also an option to make in-place installation easier...)
+
 Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-client to 
 EACH compute node.
 ```
@@ -486,7 +512,7 @@ FastSchedule=0 #this allows SLURM to auto-detect hardware on compute nodes
 
 # PLEASE REPLACE OS_USERNAME WITH THE TEXT OF YOUR Openstack USERNAME!
 NodeName=OS_USERNAME-compute-[0-1] State=UNKNOWN
-#PartitionName=$name Nodes=compute-[0-1] Default=YET MaxTime=2-00:00:00 State=UP
+#PartitionName=$name Nodes=compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
 PartitionName=general Nodes=OS_USERNAME-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
 ```
 
@@ -570,7 +596,7 @@ Now, create a simple SLURM batch script:
 centos@tgxxxx-headnode ~] vim slurm_ex.job
 #!/bin/bash
 #SBATCH -N 2 #ask for 2 nodes
-#SBATCH -n 4 #ask for 4 processes per node
+#SBATCH -n 4 #ask for 4 processes total 
 #SBATCH -o nodes_%A.out #redirect output to nodes_$JOB-NUMBER.out
 #SBATCH --time 05:00 #ask for 5 min of runtime
 
@@ -660,7 +686,8 @@ With those modules installed, you can now run (boring) mpi jobs.
 Just be sure to include
 
 ```
-module load mpi/openmpi-x86_64
+module load gnu #remember the heirarchy!
+module load openmpi
 ```
 before any mpirun commands in your job script. For a simple example, add
 ```
@@ -670,6 +697,12 @@ at the end of your slurm_ex.job, and resubmit.
 How does the output differ from before?
 Slurm provides the correct environment variables to MPI
 to run tasks on each available thread as needed.
+
+To specify the number of mpi tasks, use
+```
+mpirun -np $num_tasks <command>
+```
+where `$num_tasks` is the same as what you passed to Slurm with the `-n` flag.
 
 # Build some Scientific Software with Spack 
 
@@ -685,7 +718,7 @@ root@tgxxxx-headnode ~] yum install spack-ohpc
 ```
 
 The spack configuration needs some editing - in 
-/opt/ohpc/admin/spack/0.11.2/defaults/etc/spack/config.yaml
+/opt/ohpc/admin/spack/0.11.2/etc/spack/defaults/config.yaml
 
 <!--- and
 /opt/ohpc/admin/spack/0.11.2/defaults/etc/spack/modules.yaml
@@ -698,7 +731,7 @@ Change the following two lines in config.yaml:
 ...
   install_tree: /opt/ohpc/pub/spack
 ...
-    tcl:    /opt/ohpc/pub/modulefiles/spack
+    tcl:    /opt/ohpc/pub/spack-modules
 ...
 ```
 Be sure to preserve the whitespace! YAML is very sensitive to indentation.
@@ -753,19 +786,36 @@ compilers to the spack config. Add the name of the gnu module to the
 This may already be present.
 
 Finally, we can build some software! 
-Spack has an enormous library of tools available. We'll install a 
-standard molecular dynamics code as an example:
-```
-root@tgxxxx-headnode ~] spack install lammps+molecule % gcc@5.4.0
-```
+
+#### About Spack
 
 Spack install syntax follows a format like
 ```
-install package_name+package-variants@package_version %compiler_name@compiler_version
+install package_name+package-variants@package_version ^dependency-package %compiler_name@compiler_version
 ```
 where everything but the package name is optional. 
+Dependencies may also take package variant options.
+
+You can view the options available for each package (variants) via:
+```
+spack info $packagename
+```
 For more detailed info on spack, see the 
 [Spack documentation site](https://spack.readthedocs.io/en/latest/).
+
+#### Install LAMMPS
+
+Spack has an enormous library of tools available. We'll install a 
+standard molecular dynamics code as an example:
+First, check out the dependencies and variants:
+```
+root@tgxxxx-headnode ~] spack info lammps
+```
+
+Second, install this version:
+```
+root@tgxxxx-headnode ~] spack install lammps+molecule+mpi ^openmpi schedulers=slurm % gcc@5.4.0
+```
 
 Now, look in /opt/ohpc/pub/examples:
 ```
@@ -782,18 +832,19 @@ For most of them, we can run a job with the following script:
 #SBATCH -n 12
 #SBATCH -o lammps_%A.out #%A is shorthand for the jobID
 
-module load gnu
+module load gnu #needed to have correct libraries in LIBRARY_PATH
 module load spack #needed to access packages built with spack
-module load openmpi@3.0.0-????? # copy-paste these two in from the output of 'module avail'
-module load lammps@?.?.?-?????
+module load openmpi-3.0.0-gcc-5.4.0-geb4lyx #load the spack-built openmpi
+module load lammps-20170922-gcc-5.4.0-of7ibaw #copy-paste this name from the output of 'module avail'
+
+module avail
 
 mkdir -p /export/workdir_${SLURM_JOB_ID}/
-cp -r /opt/ohpc/pub/examples/micelles /export/workdir_${SLURM_JOB_ID}/
+cp -r /opt/ohpc/pub/examples/micelle/* /export/workdir_${SLURM_JOB_ID}/
 
 cd /export/workdir_${SLURM_JOB_ID}/ 
 
-# Note that np = Num Nodes * Num Tasks
-mpirun -np 12 lmps < in.micelles > lmps_run.txt
+mpirun -np 12 lmp < in.micelle
 ```
 
 <!---
@@ -905,7 +956,8 @@ root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_resume.sh
 root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_resume.sh
 ```
 
-We'll need to update the slurm.conf, by adding the following lines:
+We'll need to update the slurm.conf, by adding the following lines, above the 
+"# COMPUTE NODES" configuration section:
 ```
 root@tgxxxx-headnode ~] vim /etc/slurm/slurm.conf
 #CLOUD CONFIGURATION
@@ -917,6 +969,10 @@ ResumeTimeout=300 #max time in seconds between ResumeProgram running and when th
 SuspendRate=0 #number of nodes per minute that can be suspended/destroyed
 SuspendTime=30 #time in seconds before an idle node is suspended
 SuspendTimeout=30 #time between running SuspendProgram and the node being completely down
+```
+Also, edit your compute node definitions to reflect the cloud status:
+```
+NodeName=OS-USERNAME-compute-[0-1] State=CLOUD
 ```
 
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
@@ -931,3 +987,30 @@ While they're currently in 'idle' state, that won't last for longer than
 SuspendTime. Wait for 30 seconds, and submit a job - any job! 
 Try submitting both one and two node jobs to see how the scheduler and nodes behave. 
 Watch the logs in /var/log/slurm_elastic.log.
+
+Slurm should display a new type of state for your nodes reflecting the power management:
+```
+[root@tg??????-headnode ~]# sinfo 
+PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
+general*     up 1-00:00:00      2  idle~ tg??????-compute-[0-1]
+[root@tg??????-headnode ~]# scontrol show node tg??????-compute-0
+NodeName=tg??????-compute-0 Arch=x86_64 CoresPerSocket=1
+   CPUAlloc=0 CPUErr=0 CPUTot=6 CPULoad=0.14
+   AvailableFeatures=(null)
+   ActiveFeatures=(null)
+   Gres=(null)
+   NodeAddr=tg??????-compute-0 NodeHostName=tg??????-compute-0 Port=0 Version=17.11
+   OS=Linux 3.10.0-862.3.3.el7.x86_64 #1 SMP Fri Jun 15 04:15:27 UTC 2018 
+   RealMemory=15885 AllocMem=0 FreeMem=15598 Sockets=6 Boards=1
+   State=IDLE+POWER ThreadsPerCore=1 TmpDisk=61428 Weight=1 Owner=N/A MCS_label=N/A
+   Partitions=general 
+   BootTime=2018-07-18T14:11:13 SlurmdStartTime=2018-07-18T16:21:20
+   CfgTRES=cpu=6,mem=15885M,billing=6
+   AllocTRES=
+   CapWatts=n/a
+   CurrentWatts=0 LowestJoules=0 ConsumedJoules=0
+   ExtSensorsJoules=n/s ExtSensorsWatts=0 ExtSensorsTemp=n/s
+```
+
+When you submit a new job, your nodes will appears in `CF` state (for CONFIGURING) in the `squeue` 
+output. It make take up to 2 minutes for nodes to become available from their suspended state.
