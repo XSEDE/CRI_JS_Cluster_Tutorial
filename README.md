@@ -563,6 +563,14 @@ root@headnode]# ssh compute-0 'systemctl start slurmd'
 root@headnode]# ssh compute-0 'systemctl status slurmd'
 ```
 As usual, repeat for compute-1
+```
+root@headnode]# ssh compute-1 'systemctl enable munge'
+root@headnode]# ssh compute-1 'systemctl start munge'
+root@headnode]# ssh compute-1 'systemctl status munge'
+root@headnode]# ssh compute-1 'systemctl enable slurmd'
+root@headnode]# ssh compute-1 'systemctl start slurmd'
+root@headnode]# ssh compute-1 'systemctl status slurmd'
+```
 
 Run sinfo and scontrol to see your new nodes:
 ```
