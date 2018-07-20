@@ -791,17 +791,20 @@ Make sure the gnu and openmpi modules are loaded
 ```
 root@tgxxxx-headnode ~] spack compiler find
 ```
+This command may not return that any new compilers have been found, 
+since it's been added to the image already, but this is typically
+a necessary step!
 
 In order to use the proper libraries, we also need to add the 
 compilers to the spack config. Add the name of the gnu module to the
 'modules' line for the gnu 5.4.0 compiler in
 /root/.spack/linux/compilers.yaml 
+(This may already be present.)
 ```
 ...
     module: [gnu/5.4.0]
 ...
 ```
-This may already be present.
 
 Finally, we can build some software! 
 
