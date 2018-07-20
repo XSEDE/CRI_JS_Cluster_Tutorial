@@ -639,8 +639,8 @@ root@tgxxxx-headnode ~] yum install lmod-ohpc
 ```
 Repeat the same on your compute nodes:
 ```
-root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-0 'yum install -y lmod-ohpc'
-root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-1 'yum install -y lmod-ohpc'
+root@tgxxxx-headnode ~] ssh compute-0 'yum install -y lmod-ohpc'
+root@tgxxxx-headnode ~] ssh compute-1 'yum install -y lmod-ohpc'
 ```
 
 This sets you up with the 'lmod' module system.
