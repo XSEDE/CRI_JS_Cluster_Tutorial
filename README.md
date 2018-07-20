@@ -536,11 +536,11 @@ root@headnode]# systemctl enable munge
 root@headnode]# systemctl start munge 
 root@headnode]# systemctl enable slurmctld 
 root@headnode]# systemctl start slurmctld 
+root@headnode]# systemctl -l status slurmctld
 ```
 
-If slurmctld fails to start, check the following for useful messages:
+If slurmctld failed to start, check the following for useful messages:
 ```
-root@headnode]# systemctl -l status slurmctld
 root@headnode]# journalctl -xe
 root@headnode]# less /var/log/slurmctld.log
 ```
