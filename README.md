@@ -447,6 +447,11 @@ server HEADNODE-PRIVATE-IP iburst
 root@compute-0 ~]# systemctl restart chronyd
 ```
 
+Check that you're accessing the headnode via:
+```
+root@compute-0 ~]# chronyc sources -v
+```
+
 ---
 **Follow the above steps for compute-1 now.**
 ---
