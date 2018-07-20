@@ -990,15 +990,21 @@ SuspendRate=0 #number of nodes per minute that can be suspended/destroyed
 SuspendTime=30 #time in seconds before an idle node is suspended
 SuspendTimeout=30 #time between running SuspendProgram and the node being completely down
 ```
-Also, edit your compute node definitions to reflect the cloud status:
+Also, edit your compute node definitions in /etc/slurm/slurm.conf to reflect the cloud status:
 ```
 NodeName=OS-USERNAME-compute-[0-1] State=CLOUD
 ```
 
+Now, restart the slurm control daemon:
+```
+root@headnode ~]# systemctl restart slurmctld
+```
+
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
-root@tgxxxx-headnode ~] scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
-root@tgxxxx-headnode ~] ssh ${OS_USERNAME}-compute-0 'systemctl restart slurmd'
+root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
+root@tgxxxx-headnode ~]# ssh compute-0 'systemctl restart slurmd'
+root@tgxxxx-headnode ~]# ssh compute-1 'systemctl restart slurmd'
 ```
 
 At this point, your compute nodes should be managed by slurm! 
