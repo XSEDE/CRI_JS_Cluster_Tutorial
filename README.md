@@ -271,8 +271,7 @@ second, we need all of the nodes to share the same time.
 To share filesystems, we'll export our home directories, the openstack volume and 
 the OpenHPC public directory via nfs.
 
-Edit /etc/exports to include (substitute the private IP of your headnode!)
-entries for /home and /export
+Edit /etc/exports to include entries for /home, /export, and /opt/ohpc/pub:
 ```
 root@headnode ~]# vim /etc/exports
 /home 10.0.0.0/24(rw,no_root_squash)
