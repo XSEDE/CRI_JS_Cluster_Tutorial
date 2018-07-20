@@ -1042,3 +1042,8 @@ NodeName=tg??????-compute-0 Arch=x86_64 CoresPerSocket=1
 
 When you submit a new job, your nodes will appears in `CF` state (for CONFIGURING) in the `squeue` 
 output. It make take up to 2 minutes for nodes to become available from their suspended state.
+
+If you'd like to watch the queue repeatedly, you can use:
+```
+centos@headnode ~]$ watch -n 10 squeue
+```
