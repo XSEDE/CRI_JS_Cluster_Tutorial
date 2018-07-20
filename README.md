@@ -165,12 +165,15 @@ centos@tg??????-headnode]$ sudo cp openrc.sh /root/
 
 Create an ssh key on the headnode, as BOTH centos and root:
 ```
-centos@headnode]$ ssh-keygen -b 2048 -t rsa
+centos@headnode]$ ssh-keygen -b 2048 -t rsa 
+#hit 'y' to overwrite the existing key!
+#just accepting the defaults (hit Enter) is fine for this tutorial!
+# This will create passwordless keys, which is not ideal, but 
+# will make things easier for this tutorial.
 centos@headnode]$ cat .ssh/id_rsa.pub >> .ssh/authorized_keys
 centos@headnode ~]# sudo su -
 root@headnode ~]# ssh-keygen -b 2048 -t rsa
 root@headnode ~]# cat .ssh/id_rsa.pub >> .ssh/authorized_keys
-#just accepting the defaults (hit Enter) is fine for this tutorial!
 ```
 We'll use this to enable root access between nodes in the cluster, later, and 
 to run jobs as the centos user.
