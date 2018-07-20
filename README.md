@@ -380,17 +380,17 @@ to allow access! There should only be one authorized key.
 root@headnode]# cat .ssh/id_rsa.pub #copy the output to your clipboard
 root@headnode]# ssh centos@compute-0
 centos@compute-0 ~]$ sudo su -
-root@compute-0 ~]# sudo vi /root/.ssh/authorized_keys #paste your key into this file
-root@compute-0 ~]# sudo cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
+root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file - remove the existing top line!
+root@compute-0 ~]# cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
                                                  #IF SO, REMOVE THEM! The ssh key must be on a single line
 root@compute-0 ~]# exit
 
 #Repeat for compute-1:
-root@headnode ~]# ssh compute-1
+root@headnode ~]# ssh centos@compute-1
 centos@compute-1 ~]$ sudo su -
-root@compute-1 ~]# sudo vi /root/.ssh/authorized_keys
-root@compute-1 ~]# sudo cat -vTE /root/.ssh/authorized_keys 
+root@compute-1 ~]# vi /root/.ssh/authorized_keys
+root@compute-1 ~]# cat -vTE /root/.ssh/authorized_keys 
 ```
 
 Confirm that as root on the headnode, you can ssh into each compute node:
