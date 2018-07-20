@@ -606,6 +606,9 @@ centos@tgxxxx-headnode ~] ssh compute-0 #just as a test
 ```
 --->
 
+Before you run jobs, log out from the root user, back to 'centos'.
+(ctrl+d will do the trick).
+
 Now, create a simple SLURM batch script:
 ```
 centos@tgxxxx-headnode ~] vim slurm_ex.job
