@@ -974,6 +974,8 @@ slurm user!
 ```
 root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_resume.sh
 root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_resume.sh
+root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_suspend.sh
+root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_suspend.sh
 ```
 
 We'll need to update the slurm.conf, by adding the following lines, above the 
