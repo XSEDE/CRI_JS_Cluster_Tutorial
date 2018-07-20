@@ -915,7 +915,6 @@ Now, let's create scripts that slurm can run to suspend and resume the nodes.
 For node resume, edit
 ```
 root@tgxxxx-headnode ~] vim /usr/local/sbin/slurm_resume.sh
-...
 #!/bin/bash
 source /etc/slurm/openrc.sh
 
