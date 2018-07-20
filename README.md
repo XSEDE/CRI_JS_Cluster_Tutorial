@@ -362,7 +362,7 @@ copy the root ssh public key from the headnode to the compute nodes.
 In /etc/hosts, add entries for each of your VMs on the headnode:
 ```
 root@headnode ~]# vim /etc/hosts
-HEADNODE-PRIVATE-IP  headnode ${OS_USERNAME-headnode}
+HEADNODE-PRIVATE-IP  headnode ${OS_USERNAME}-headnode
 COMPUTE-0-PRIVATE-IP  compute-0 ${OS_USERNAME}-compute-0
 COMPUTE-1-PRIVATE-IP  compute-1 ${OS_USERNAME}-compute-1
 ```
