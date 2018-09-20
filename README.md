@@ -523,12 +523,14 @@ NodeName=OS_USERNAME-compute-[0-1] State=UNKNOWN
 PartitionName=general Nodes=OS_USERNAME-compute-[0-1] Default=YES MaxTime=2-00:00:00 State=UP
 ```
 
+<!-- This isn't needed 
 Now, check the necessary files in /var/log/ and make sure they are owned by the 
 slurm user:
 ```
 root@headnode]# touch /var/log/slurmctld.log
 root@headnode]# chown slurm:slurm /var/log/slurmctld.log
 ```
+--->
 
 Finally, start the munge and slurmctld services:
 ```
