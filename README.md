@@ -94,7 +94,7 @@ or modify anything that isn't yours!**
 First we'll create a VM to contain the head node. 
 
 ```
-api-host]$ openstack server create --flavor m1.tiny  --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --security-group cluster-internal --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
+api-host]$ openstack server create --flavor m1.tiny  --image "JS-API-Featured-CentOS7-Sep-18-2018" --key-name ${OS_USERNAME}-api-key --security-group global-ssh --security-group cluster-internal --nic net-id=${OS_USERNAME}-api-net ${OS_USERNAME}-headnode 
 ```
 
 Now, create a public IP for that server:
@@ -308,13 +308,13 @@ Create two compute nodes as follows:
 root@headnode]#source openrc.sh
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
---image "JS-API-Featured-Centos7-Jul-2-2018" \
+--image "JS-API-Featured-CentOS7-Sep-18-2018" \
 --key-name ${OS_USERNAME}-cluster-key \
 --nic net-id=${OS_USERNAME}-api-net \
 --wait ${OS_USERNAME}-compute-0
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
---image "JS-API-Featured-Centos7-Jul-2-2018" \
+--image "JS-API-Featured-CentOS7-Sep-18-2018" \
 --key-name ${OS_USERNAME}-cluster-key \
 --nic net-id=${OS_USERNAME}-api-net \
 --wait ${OS_USERNAME}-compute-1
