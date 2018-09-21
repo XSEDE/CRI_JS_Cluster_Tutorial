@@ -726,6 +726,9 @@ where `$num_tasks` is the same as what you passed to Slurm with the `-n` flag.
 
 # Build some Scientific Software with Spack 
 
+_*The installation step of this section takes a while to run, so please open 
+a separate terminal to run this in!*_
+
 In order to run something more interesting, let's build some software!
 
 Spack is a package management tool designed specifically to ease the 
@@ -834,6 +837,9 @@ First, check out the dependencies and variants:
 ```
 root@tgxxxx-headnode ~] spack info lammps
 ```
+
+_*This next command will take a while! Hence the warning above to start a separate
+terminal.*_
 
 Second, install this version:
 ```
@@ -1049,3 +1055,5 @@ If you'd like to watch the queue automatically, you can use:
 ```
 centos@headnode ~]$ watch -n 10 squeue
 ```
+
+Now is a great time to circle back to the LAMMPS job file above, and try it out!
