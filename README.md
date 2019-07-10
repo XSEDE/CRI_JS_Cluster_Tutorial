@@ -1048,6 +1048,7 @@ root@headnode ~]# systemctl restart slurmctld
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
 root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
+root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-1:/etc/slurm/slurm.conf
 root@tgxxxx-headnode ~]# ssh compute-0 'systemctl restart slurmd'
 root@tgxxxx-headnode ~]# ssh compute-1 'systemctl restart slurmd'
 ```
