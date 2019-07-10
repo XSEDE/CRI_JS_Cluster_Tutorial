@@ -308,18 +308,18 @@ Create two compute nodes as follows:
 root@headnode]#source openrc.sh
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
---image "JS-API-Featured-CentOS7-Sep-18-2018" \
+--image "JS-API-Featured-CentOS7-May-20-2019" \
 --key-name ${OS_USERNAME}-cluster-key \
 --nic net-id=${OS_USERNAME}-api-net \
 --wait ${OS_USERNAME}-compute-0
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
---image "JS-API-Featured-CentOS7-Sep-18-2018" \
+--image "JS-API-Featured-CentOS7-May-20-2019" \
 --key-name ${OS_USERNAME}-cluster-key \
 --nic net-id=${OS_USERNAME}-api-net \
 --wait ${OS_USERNAME}-compute-1
 ```
-<!-- root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-Centos7-Jul-2-2018" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-1 -->
+<!-- root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-CentOS7-May-20-2019" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-1 -->
 
 Check their assigned ip addresses with
 ```
