@@ -271,6 +271,12 @@ second, we need all of the nodes to share the same time.
 To share filesystems, we'll export our home directories, the openstack volume and 
 the OpenHPC public directory via nfs.
 
+First of all, to ensure that all users will have access to the /export filesystem, 
+reset the permissions on the mount point:
+```
+root@headnode ~]# chmod 777 /exports
+```
+
 Edit /etc/exports to include entries for /home, /export, and /opt/ohpc/pub:
 ```
 root@headnode ~]# vim /etc/exports
@@ -881,6 +887,7 @@ Finally, install a version of lammps:
 ```
 root@tgxxxx-headnode ~] spack install lammps+molecule+mpi 
 ```
+
 Now, look in /opt/ohpc/pub/examples:
 ```
 root@tgxxxx-headnode ~] ls /opt/ohpc/pub/examples
@@ -910,6 +917,10 @@ cd /export/workdir_${SLURM_JOB_ID}/
 
 mpirun -np 12 lmp < in.micelle
 ```
+
+Please note that before running a LAMMPS job, it may be necessary to 
+re-source ```/etc/profile``` due to new module files being available.
+The above script should also be submitted as the ```centos``` user, rather than ```root```.
 
 <!---
 ## TODO: Add some interesting jobs. With Software. Also, add some software.
