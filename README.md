@@ -1039,18 +1039,17 @@ Also, edit your compute node definitions in /etc/slurm/slurm.conf to reflect the
 ```
 NodeName=OS-USERNAME-compute-[0-1] State=CLOUD
 ```
-
-Now, restart the slurm control daemon:
-```
-root@headnode ~]# systemctl restart slurmctld
-```
-
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
 root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
 root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-1:/etc/slurm/slurm.conf
 root@tgxxxx-headnode ~]# ssh compute-0 'systemctl restart slurmd'
 root@tgxxxx-headnode ~]# ssh compute-1 'systemctl restart slurmd'
+```
+
+Now, restart the slurm control daemon on the headnode:
+```
+root@headnode ~]# systemctl restart slurmctld
 ```
 
 At this point, your compute nodes should be managed by slurm! 
