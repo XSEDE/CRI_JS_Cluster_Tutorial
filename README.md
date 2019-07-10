@@ -741,7 +741,7 @@ root@tgxxxx-headnode ~] yum install spack-ohpc
 ```
 
 The spack configuration needs some editing - in 
-/opt/ohpc/admin/spack/0.11.2/etc/spack/defaults/config.yaml
+/opt/ohpc/admin/spack/0.12.1/etc/spack/defaults/config.yaml
 
 <!--- and
 /opt/ohpc/admin/spack/0.11.2/defaults/etc/spack/modules.yaml
@@ -754,7 +754,7 @@ Change the following two lines in config.yaml:
 ...
   install_tree: /opt/ohpc/pub/spack
 ...
-    tcl:    /opt/ohpc/pub/spack-modules
+    tcl:    /opt/ohpc/pub/spack/spack-modules
 ...
 ```
 Be sure to preserve the whitespace! YAML is very sensitive to indentation.
@@ -767,9 +767,9 @@ root@headnode ~]# mv /opt/ohpc/admin/modulefiles/spack /opt/ohpc/pub/modulefiles
 
 Also, edit this file as follows, by changing the last MODULEPATH line:
 ```
-root@headnode ~]# vim /opt/ohpc/pub/modulefiles/spack/0.11.2
+root@headnode ~]# vim /opt/ohpc/pub/modulefiles/spack/0.12.1
 ...
-prepend-path   MODULEPATH   /opt/ohpc/pub/spack-modules/linux-centos7-x86_64
+prepend-path   MODULEPATH   /opt/ohpc/pub/spack/spack-modules/linux-centos7-x86_64
 ...
 ```
 
@@ -841,11 +841,46 @@ root@tgxxxx-headnode ~] spack info lammps
 _*This next command will take a while! Hence the warning above to start a separate
 terminal.*_
 
-Second, install this version:
+To see the list of packages that would be built by spack, in order to build lammps, run:
 ```
-root@tgxxxx-headnode ~] spack install lammps+molecule+mpi ^openmpi schedulers=slurm % gcc@5.4.0
+root@tgxxxx-headnode ~] spack spec lammps+molecule+mpi
+```
+(I've specified a few variants here, that will be helpful for running example jobs)
+
+That looks like a rather long list... Notice that spack would be installing
+both SLURM and a new version of OpenMPI, which are already installed locally!
+To avoid building the entire world of software, it's possible to let spack know
+about some already available packages 
+with a packages.yaml file in our local .spack directory:
+
+```
+root@headnode ~]# vim /root/.spack/linux/packages.yaml
+...
+packages:
+  openmpi:
+    paths:
+      openmpi%gcc@5.4.0: /opt/ohpc/pub/mpi/openmpi-gnu/1.10.7/bin/
+    buildable: false
+  slurm:
+    paths:
+      slurm: /usr/lib64/slurm/
+    buildable: false
+  cmake:
+    paths:
+      cmake: /bin/cmake
+    buildable: false
+...
 ```
 
+Re-run the ```spack spec``` command, to see that fewer dependencies will be built.
+
+_*This next command may take a while! Hence the warning above to start a separate
+terminal.*_
+
+Finally, install a version of lammps:
+```
+root@tgxxxx-headnode ~] spack install lammps+molecule+mpi 
+```
 Now, look in /opt/ohpc/pub/examples:
 ```
 root@tgxxxx-headnode ~] ls /opt/ohpc/pub/examples
@@ -863,8 +898,8 @@ For most of them, we can run a job with the following script:
 
 module load gnu #needed to have correct libraries in LIBRARY_PATH
 module load spack #needed to access packages built with spack
-module load openmpi-3.0.0-gcc-5.4.0-geb4lyx #load the spack-built openmpi
-module load lammps-20170922-gcc-5.4.0-of7ibaw #copy-paste this name from the output of 'module avail'
+module load openmpi #load the ohpc-provided openmpi
+module load lammps-20180822-gcc-5.4.0-uqz4iyj #copy-paste this name from the output of 'module avail'
 
 module avail
 
