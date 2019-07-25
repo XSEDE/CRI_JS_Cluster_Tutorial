@@ -100,6 +100,7 @@ api-host]$ openstack server create --flavor m1.tiny  --image "JS-API-Featured-Ce
 Now, create a public IP for that server:
 ```
 api-host]$ openstack floating ip create public
+
 api-host]$ openstack server add floating ip ${OS_USERNAME}-headnode your.ip.number.here
 ```
 
@@ -117,6 +118,7 @@ api-host]$ openstack server add volume ${OS_USERNAME}-headnode ${OS_USERNAME}-10
 Now, on your client machine, create a .ssh directory in your home directory, and add the following:
 ```
 api-host]$ mkdir -m 0700 .ssh
+
 api-host]$ vim .ssh/config
 #ssh config file:
 Host headnode
@@ -128,6 +130,7 @@ Host headnode
 Make sure the permissions on .ssh are 700!
 ```
 api-host]$ ls -ld .ssh
+
 api-host]$ chmod 0700 .ssh
 ```
 
@@ -135,6 +138,7 @@ api-host]$ chmod 0700 .ssh
 ssh into your headnode machine 
 ```
 api-host]$ ssh headnode
+
 #Or, if you didn't set up the above .ssh/config:
 api-host]$ ssh -i YOUR-KEY-NAME centos@YOUR-HEADNODE-PUBLIC-IP
 ```
@@ -170,9 +174,14 @@ centos@headnode]$ ssh-keygen -b 2048 -t rsa
 #just accepting the defaults (hit Enter) is fine for this tutorial!
 # This will create passwordless keys, which is not ideal, but 
 # will make things easier for this tutorial.
+
 centos@headnode]$ cat .ssh/id_rsa.pub >> .ssh/authorized_keys
+
+
 centos@headnode ~]# sudo su -
+
 root@headnode ~]# ssh-keygen -b 2048 -t rsa
+
 root@headnode ~]# cat .ssh/id_rsa.pub >> .ssh/authorized_keys
 ```
 We'll use this to enable root access between nodes in the cluster, later, and 
@@ -200,6 +209,7 @@ the compute nodes we'll create:
 
 ```
 root@tgxxxx-headnode ]# source openrc.sh
+
 root@tgxxxx-headnode ]# openstack keypair create --public-key .ssh/id_rsa.pub ${OS_USERNAME}-cluster-key
 ```
 
@@ -254,10 +264,12 @@ Now, find the UUID of your new filesystem, add it to fstab, and mount:
 headnode]$ ls -l /dev/disk/by-uuid
 UUID_OF_ROOT  /dev/sda
 UUID_OF_NEW   /dev/sdb
+
 headnode]$ vi /etc/fstab
 #Add the line: 
 UUID=UUID_OF_NEW   /export   xfs    defaults   0 0
 headnode]$ mkdir /export
+
 headnode]$ mount -a
 ```
 -->
@@ -288,6 +300,7 @@ root@headnode ~]# vim /etc/exports
 Save and restart nfs, run exportfs. 
 ```
 root@headnode ~]# systemctl enable nfs-server nfs-lock nfs rpcbind nfs-idmap
+
 root@headnode ~]# systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 ```
 
@@ -312,12 +325,14 @@ headnode.
 Create two compute nodes as follows:
 ```
 root@headnode]#source openrc.sh
+
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
 --image "JS-API-Featured-CentOS7-May-20-2019" \
 --key-name ${OS_USERNAME}-cluster-key \
 --nic net-id=${OS_USERNAME}-api-net \
 --wait ${OS_USERNAME}-compute-0
+
 root@headnode]# openstack server create --flavor m1.medium \
 --security-group ${OS_USERNAME}-global-ssh \
 --image "JS-API-Featured-CentOS7-May-20-2019" \
@@ -384,9 +399,13 @@ user and node you're on. Remove the top line of the authorized_keys file on the 
 to allow access! There should only be one authorized key.
 ```
 root@headnode]# cat .ssh/id_rsa.pub #copy the output to your clipboard
+
 root@headnode]# ssh centos@compute-0
+
 centos@compute-0 ~]$ sudo su -
+
 root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file - remove the existing top line!
+
 root@compute-0 ~]# cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
                                                  #IF SO, REMOVE THEM! The ssh key must be on a single line
@@ -394,15 +413,20 @@ root@compute-0 ~]# exit
 
 #Repeat for compute-1:
 root@headnode ~]# ssh centos@compute-1
+
 centos@compute-1 ~]$ sudo su -
+
 root@compute-1 ~]# vi /root/.ssh/authorized_keys
+
 root@compute-1 ~]# cat -vTE /root/.ssh/authorized_keys 
 ```
 
 Confirm that as root on the headnode, you can ssh into each compute node:
 ```
 root@headnode ~]# sudo su -
+
 root@headnode ~]# ssh compute-0 'hostname'
+
 root@headnode ~]# ssh compute-1 'hostname'
 ```
 
@@ -410,6 +434,7 @@ root@headnode ~]# ssh compute-1 'hostname'
 We'll use this method to synchronize several files later on as well - from root on the headnode:
 ```
 root@headnode ~]# scp /etc/hosts compute-0:/etc/hosts
+
 root@headnode ~]# scp /etc/hosts compute-1:/etc/hosts
 ```
 
@@ -422,6 +447,7 @@ mount the shared directories from the headnode:
 root@headnode ~]# ssh compute-0
 
 root@compute-0 ~]# mkdir -m 777 /export #the '-m 777' grants all users full access 
+
 root@compute-0 ~]# mkdir -p /opt/ohpc/pub
 
 root@compute-0 ~]# vi /etc/fstab
@@ -440,16 +466,16 @@ root@compute-0 ~]# setsebool -P use_nfs_home_dirs on
 Double-check that this worked:
 ```
 root@compute-0 ~]# mount -a 
+
 root@compute-0 ~]# df -h
 ```
 
 While you're there, add the headnode as a server in /etc/chronyd.conf:
 ```
 root@compute-0 ~]# vi /etc/chrony.conf
-...
 #Add the following line to the top of the server block:
 server HEADNODE-PRIVATE-IP iburst
-...
+
 root@compute-0 ~]# systemctl restart chronyd
 ```
 
@@ -493,6 +519,7 @@ Now, as on the headnode, add the OpenHPC repository and install the ohpc-slurm-c
 EACH compute node.
 ```
 root@compute-0 ~]# yum install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+
 root@compute-0 ~]# yum install ohpc-slurm-client hwloc-libs
 ```
 
@@ -504,6 +531,7 @@ This will create a new munge key on the compute nodes, so you will have to copy 
 the munge key from the headnode:
 ```
 root@headnode]# scp /etc/munge/munge.key compute-0:/etc/munge/
+
 root@headnode]# scp /etc/munge/munge.key compute-1:/etc/munge/
 ```
 
@@ -534,6 +562,7 @@ Now, check the necessary files in /var/log/ and make sure they are owned by the
 slurm user:
 ```
 root@headnode]# touch /var/log/slurmctld.log
+
 root@headnode]# chown slurm:slurm /var/log/slurmctld.log
 ```
 --->
@@ -541,15 +570,20 @@ root@headnode]# chown slurm:slurm /var/log/slurmctld.log
 Finally, start the munge and slurmctld services:
 ```
 root@headnode]# systemctl enable munge 
+
 root@headnode]# systemctl start munge 
+
 root@headnode]# systemctl enable slurmctld 
+
 root@headnode]# systemctl start slurmctld 
+
 root@headnode]# systemctl -l status slurmctld
 ```
 
 If slurmctld failed to start, check the following for useful messages:
 ```
 root@headnode]# journalctl -xe
+
 root@headnode]# less /var/log/slurmctld.log
 ```
 
@@ -557,6 +591,7 @@ Once you've finished that, scp the new slurm.conf to each compute node:
 (slurm requires that all nodes have the same slurm.conf file!)
 ```
 root@headnode]# scp /etc/slurm/slurm.conf compute-0:/etc/slurm/
+
 root@headnode]# scp /etc/slurm/slurm.conf compute-1:/etc/slurm/
 ```
 
@@ -564,26 +599,38 @@ Try remotely starting the services on the compute nodes:
 (as root on the headnode)
 ```
 root@headnode]# ssh compute-0 'systemctl enable munge'
+
 root@headnode]# ssh compute-0 'systemctl start munge'
+
 root@headnode]# ssh compute-0 'systemctl status munge'
+
 root@headnode]# ssh compute-0 'systemctl enable slurmd'
+
 root@headnode]# ssh compute-0 'systemctl start slurmd'
+
 root@headnode]# ssh compute-0 'systemctl status slurmd'
 ```
 As usual, repeat for compute-1
 ```
 root@headnode]# ssh compute-1 'systemctl enable munge'
+
 root@headnode]# ssh compute-1 'systemctl start munge'
+
 root@headnode]# ssh compute-1 'systemctl status munge'
+
 root@headnode]# ssh compute-1 'systemctl enable slurmd'
+
 root@headnode]# ssh compute-1 'systemctl start slurmd'
+
 root@headnode]# ssh compute-1 'systemctl status slurmd'
 ```
 
 Run sinfo and scontrol to see your new nodes:
 ```
 root@headnode]# sinfo
+
 root@headnode]# sinfo --long --Node #sometimes a more usful format
+
 root@headnode]# scontrol show node  # much more detailed 
 ```
 
@@ -609,7 +656,9 @@ on all nodes, this is enough to enable access to the compute nodes!
 ```
 centos@tgxxxx-headnode ~] ssh-keygen -t rsa -b 2048
 #just accepting the defaults (hit Enter) is fine for this tutorial!
+
 centos@tgxxxx-headnode ~] cat .ssh/id_rsa.pub >> .ssh/authorized_keys
+
 centos@tgxxxx-headnode ~] ssh compute-0 #just as a test
 ```
 --->
@@ -648,6 +697,7 @@ root@tgxxxx-headnode ~] yum install lmod-ohpc
 Repeat the same on your compute nodes:
 ```
 root@tgxxxx-headnode ~] ssh compute-0 'yum install -y lmod-ohpc'
+
 root@tgxxxx-headnode ~] ssh compute-1 'yum install -y lmod-ohpc'
 ```
 
@@ -713,6 +763,7 @@ Just be sure to include
 
 ```
 module load gnu #remember the heirarchy!
+
 module load openmpi
 ```
 before any mpirun commands in your job script. For a simple example, add
@@ -774,9 +825,9 @@ root@headnode ~]# mv /opt/ohpc/admin/modulefiles/spack /opt/ohpc/pub/modulefiles
 Also, edit this file as follows, by changing the last MODULEPATH line:
 ```
 root@headnode ~]# vim /opt/ohpc/pub/modulefiles/spack/0.12.1
-...
+#Edit the MODULEPATH Line
 prepend-path   MODULEPATH   /opt/ohpc/pub/spack/spack-modules/linux-centos7-x86_64
-...
+
 ```
 
 To start using spack, as root, load the spack module:
@@ -861,7 +912,7 @@ with a packages.yaml file in our local .spack directory:
 
 ```
 root@headnode ~]# vim /root/.spack/linux/packages.yaml
-...
+#Add the following to the empty file:
 packages:
   openmpi:
     paths:
@@ -875,7 +926,6 @@ packages:
     paths:
       cmake: /bin/cmake
     buildable: false
-...
 ```
 
 Re-run the ```spack spec``` command, to see that fewer dependencies will be built.
@@ -955,13 +1005,16 @@ Place a copy of your openrc.sh in /etc/slurm/, and make sure it's owned,
 and only readable by the 'slurm' user:
 ```
 root@tgxxxx-headnode ~] cp openrc.sh /etc/slurm/
+
 root@tgxxxx-headnode ~] chown slurm:slurm /etc/slurm/openrc.sh
+
 root@tgxxxx-headnode ~] chmod 400 /etc/slurm/openrc.sh
 ```
 
 We'll also create a log file for slurm to use:
 ```
 touch /var/log/slurm_elastic.log
+
 chown slurm:slurm /var/log/slurm_elastic.log
 ```
 
@@ -1027,8 +1080,11 @@ Make sure slurm_resume.sh and slurm_suspend.sh are owned and executable by the
 slurm user!
 ```
 root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_resume.sh
+
 root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_resume.sh
+
 root@tgxxxx-headnode ~] chown slurm:slurm /usr/local/sbin/slurm_suspend.sh
+
 root@tgxxxx-headnode ~] chmod u+x /usr/local/sbin/slurm_suspend.sh
 ```
 
@@ -1036,6 +1092,7 @@ We'll need to update the slurm.conf, by adding the following lines, above the
 "# COMPUTE NODES" configuration section:
 ```
 root@tgxxxx-headnode ~] vim /etc/slurm/slurm.conf
+#Add the following block:
 #CLOUD CONFIGURATION
 PrivateData=cloud
 ResumeProgram=/usr/local/sbin/slurm_resume.sh
@@ -1053,8 +1110,11 @@ NodeName=OS-USERNAME-compute-[0-1] State=CLOUD
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
 root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
+
 root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-1:/etc/slurm/slurm.conf
+
 root@tgxxxx-headnode ~]# ssh compute-0 'systemctl restart slurmd'
+
 root@tgxxxx-headnode ~]# ssh compute-1 'systemctl restart slurmd'
 ```
 
