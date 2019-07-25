@@ -470,7 +470,7 @@ root@compute-0 ~]# mount -a
 root@compute-0 ~]# df -h
 ```
 
-While you're there, add the headnode as a server in /etc/chronyd.conf:
+While you're there, add the headnode as a server in /etc/chrony.conf:
 ```
 root@compute-0 ~]# vi /etc/chrony.conf
 #Add the following line to the top of the server block:
