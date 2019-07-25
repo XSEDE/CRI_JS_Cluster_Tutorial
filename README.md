@@ -404,7 +404,7 @@ root@headnode]# ssh centos@compute-0
 
 centos@compute-0 ~]$ sudo su -
 
-root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file 
+root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file - REMOVE ALL OTHER LINES
 
 root@compute-0 ~]# cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
