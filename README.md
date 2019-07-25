@@ -847,9 +847,11 @@ comes with several pre-built dependencies, to reduce the time it takes to build
 our example software.
 
 Now, let's add our new compilers to the spack environment. 
-Make sure the gnu and openmpi modules are loaded 
-(check this via `module list`), and run
+We'll load the gnu compilers into our environment, and then have Spack search
+for all compilers in our path:
 ```
+root@tgxxxx-headnode ~] module load gnu
+
 root@tgxxxx-headnode ~] spack compiler find
 ```
 This command may not return that any new compilers have been found, 
