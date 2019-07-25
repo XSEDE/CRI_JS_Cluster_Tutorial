@@ -274,7 +274,7 @@ the OpenHPC public directory via nfs.
 First of all, to ensure that all users will have access to the /export filesystem, 
 reset the permissions on the mount point:
 ```
-root@headnode ~]# chmod 777 /exports
+root@headnode ~]# chmod 777 /export
 ```
 
 Edit /etc/exports to include entries for /home, /export, and /opt/ohpc/pub:
