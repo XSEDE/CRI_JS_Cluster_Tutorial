@@ -13,7 +13,7 @@ Don't cancel your connection.
 
 # Configure openstack client
 
-First, double-check the openrc.sh with your training account
+First, double-check the openrc.sh with your training account/
 info - the file already exists in your home
 directory:
 
@@ -404,7 +404,7 @@ root@headnode]# ssh centos@compute-0
 
 centos@compute-0 ~]$ sudo su -
 
-root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file - remove the existing top line!
+root@compute-0 ~]# vi /root/.ssh/authorized_keys #paste your key into this file 
 
 root@compute-0 ~]# cat -vTE /root/.ssh/authorized_keys #check that there are no newline '^M', tab '^I'
                                                  # characters or lines ending in '$'
