@@ -1110,9 +1110,9 @@ NodeName=OS-USERNAME-compute-[0-1] State=CLOUD
 ```
 Be sure to copy this new slurm.conf out to your compute nodes, and restart!
 ```
-root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-0:/etc/slurm/slurm.conf
+root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf compute-0:/etc/slurm/slurm.conf
 
-root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf ${OS_USERNAME}-compute-1:/etc/slurm/slurm.conf
+root@tgxxxx-headnode ~]# scp /etc/slurm/slurm.conf compute-1:/etc/slurm/slurm.conf
 
 root@tgxxxx-headnode ~]# ssh compute-0 'systemctl restart slurmd'
 
