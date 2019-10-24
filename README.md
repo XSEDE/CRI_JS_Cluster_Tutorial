@@ -149,7 +149,6 @@ headnode]$ sudo su -
 ```
 
 WE WILL START FROM HERE, IN 2018!
--->
 So, you've already created the Jetstream instance that we'll use as a headnode.
 
 We will need to have access to Openstack from the headnode, so send over 
@@ -186,6 +185,17 @@ root@headnode ~]# cat .ssh/id_rsa.pub >> .ssh/authorized_keys
 ```
 We'll use this to enable root access between nodes in the cluster, later, and 
 to run jobs as the centos user.
+-->
+
+Your instances are already available on Jetstream - please refer to your 
+provided password slip for the IP address and password! 
+
+You can log in as the `centos` user via:
+```
+ssh centos@${headnode_ip}
+```
+This is the default user for a CentOS-based VM in Jetstream - you have 
+`sudo` permissions, and full power to configure this instance as you like.
 
 Note what the private IP is - it will be referred to later as 
 HEADNODE-PRIVATE-IP (in this example, it shows up at 10.0.0.1):
@@ -203,7 +213,7 @@ headnode]$ ip addr
 You'll replace 'HEADNODE-PRIVATE-IP' with your actual ip address in several places
 later on.
 
-
+<!--
 Now, let's add your root ssh key to openstack, so that our root user will be able to log in to
 the compute nodes we'll create:
 
@@ -217,6 +227,7 @@ Remember, you can check your keypair fingerprint via:
 ```
 ssh-keygen -E md5 -lf .ssh/id_rsa.pub 
 ```
+--->
 
 <!---
 Install useful software:
@@ -267,8 +278,8 @@ UUID_OF_NEW   /dev/sdb
 
 headnode]$ vi /etc/fstab
 #Add the line: 
-UUID=UUID_OF_NEW   /export   xfs    defaults   0 0
-headnode]$ mkdir /export
+UUID=UUID_OF_NEW   /data   xfs    defaults   0 0
+headnode]$ mkdir /data
 
 headnode]$ mount -a
 ```
@@ -283,17 +294,17 @@ second, we need all of the nodes to share the same time.
 To share filesystems, we'll export our home directories, the openstack volume and 
 the OpenHPC public directory via nfs.
 
-First of all, to ensure that all users will have access to the /export filesystem, 
-reset the permissions on the mount point:
+#### To enable the shared filesysem:
+Reset the permissions on the mount point:
 ```
-root@headnode ~]# chmod 777 /export
+root@headnode ~]# chmod 777 /data
 ```
 
-Edit /etc/exports to include entries for /home, /export, and /opt/ohpc/pub:
+Edit /etc/exports to include entries for /home, /data, and /opt/ohpc/pub:
 ```
 root@headnode ~]# vim /etc/exports
 /home 10.0.0.0/24(rw,no_root_squash)
-/export 10.0.0.0/24(rw,no_root_squash)
+/data 10.0.0.0/24(rw,no_root_squash)
 /opt/ohpc/pub 10.0.0.0/24(rw,no_root_squash)
 ```
 
@@ -304,6 +315,7 @@ root@headnode ~]# systemctl enable nfs-server nfs-lock nfs rpcbind nfs-idmap
 root@headnode ~]# systemctl start nfs-server nfs-lock nfs rpcbind nfs-idmap
 ```
 
+#### To enable shared time across the cluster:
 edit /etc/chrony.conf to include
 ```
 root@headnode ~]# vim /etc/chrony.conf
@@ -317,6 +329,7 @@ root@headnode ~]# systemctl restart chronyd
 ```
 
 
+<!--
 # Build Compute Nodes
 
 Now, we can create compute nodes attached ONLY to the private network, from the
@@ -342,9 +355,13 @@ root@headnode]# openstack server create --flavor m1.medium \
 ```
 <!-- root@headnode]# openstack server create --flavor m1.medium --security-group global-ssh --image "JS-API-Featured-CentOS7-May-20-2019" --key-name ${OS_USERNAME}-cluster-key --nic net-id=${OS_USERNAME}-api-net --wait ${OS_USERNAME}-compute-1 -->
 
+--->
+# Set up Compute Nodes
+Your compute nodes are already created in Jetstream!
 Check their assigned ip addresses with
 ```
-root@headnode ~]# openstack server list -c Name -c Networks | grep ${OS_USERNAME}
+centos@headnode ~]# source ~/openrc-train??.sh
+centos@headnode ~]# openstack server list -c Name -c Networks | grep train??
 ```
 
 <!--
@@ -372,13 +389,17 @@ public internet.
 -->
 
 
-Now, on your headnode, 
-add the compute nodes to /etc/hosts, and
+<!--
+, and
 copy the root ssh public key from the headnode to the compute nodes.
+--->
 
 ---
-**don't skip this step!**
+**Don't skip this next step!**
 ---
+
+Now, on your headnode, 
+add the compute nodes to /etc/hosts
 
 In /etc/hosts, add entries for each of your VMs on the headnode:
 ```
@@ -388,6 +409,10 @@ COMPUTE-0-PRIVATE-IP  compute-0 ${OS_USERNAME}-compute-0
 COMPUTE-1-PRIVATE-IP  compute-1 ${OS_USERNAME}-compute-1
 ```
 This will let you use shorter hostnames on the commandline.
+(Really, this is entirely for convenience - to avoid typing 
+"train??-" at the beginning of your node names!)
+
+<!---
 ---
 **ESPECIALLY don't skip this next step!**
 ---
@@ -421,6 +446,7 @@ root@compute-1 ~]# vi /root/.ssh/authorized_keys
 root@compute-1 ~]# cat -vTE /root/.ssh/authorized_keys 
 ```
 
+--->
 Confirm that as root on the headnode, you can ssh into each compute node:
 ```
 root@headnode ~]# sudo su -
@@ -446,7 +472,7 @@ mount the shared directories from the headnode:
 ```
 root@headnode ~]# ssh compute-0
 
-root@compute-0 ~]# mkdir -m 777 /export #the '-m 777' grants all users full access 
+root@compute-0 ~]# mkdir -m 777 /data #the '-m 777' grants all users full access 
 
 root@compute-0 ~]# mkdir -p /opt/ohpc/pub
 
@@ -454,7 +480,7 @@ root@compute-0 ~]# vi /etc/fstab
 
 #ADD these three lines; do NOT remove existing entries!
 HEADNODE-PRIVATE-IP:/home  /home  nfs  defaults,nofail 0 0
-HEADNODE-PRIVATE-IP:/export  /export  nfs  defaults,nofail 0 0
+HEADNODE-PRIVATE-IP:/data  /data  nfs  defaults,nofail 0 0
 HEADNODE-PRIVATE-IP:/opt/ohpc/pub  /opt/ohpc/pub  nfs  defaults,nofail 0 0
 ```
 
@@ -485,10 +511,12 @@ root@compute-0 ~]# chronyc sources -v
 ```
 
 ---
-**Follow the above steps for compute-1 now.**
+**REPEAT the above steps for compute-1 now.**
 ---
 
 ## Begin installing OpenHPC Components
+
+(Did you repeat the above section for compute-1?)
 
 Now, add the OpenHPC Yum repository to your headnode. 
 This will let you access several hundred pre-compiled packages
@@ -961,10 +989,10 @@ module load lammps-20180822-gcc-5.4.0-uqz4iyj #copy-paste this name from the out
 
 module avail
 
-mkdir -p /export/workdir_${SLURM_JOB_ID}/
-cp -r /opt/ohpc/pub/examples/micelle/* /export/workdir_${SLURM_JOB_ID}/
+mkdir -p /data/workdir_${SLURM_JOB_ID}/
+cp -r /opt/ohpc/pub/examples/micelle/* /data/workdir_${SLURM_JOB_ID}/
 
-cd /export/workdir_${SLURM_JOB_ID}/ 
+cd /data/workdir_${SLURM_JOB_ID}/ 
 
 mpirun -np 12 lmp < in.micelle
 ```
