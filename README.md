@@ -25,3 +25,5 @@ hours getting comfortable with the commandline environment. For this tutorial, c
 
 This tutorial currently uses `vim` for the text editor, though new users may be more comfortable
 with something like `nano`. Feel free to adjust as needed!
+
+This work supported by [![NSF-1548562](https://img.shields.io/badge/NSF-1548562-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=1548562)
